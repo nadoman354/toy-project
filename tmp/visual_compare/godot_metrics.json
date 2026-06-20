@@ -1,0 +1,2133 @@
+{
+	"mobile_landscape_initial_module": {
+		"choices": [
+			{
+				"card": {
+					"custom_min": {
+						"x": 168.0,
+						"y": 123.0
+					},
+					"name": "moduleChoice",
+					"rect": {
+						"h": 123.0,
+						"w": 178.0,
+						"x": 182.0,
+						"y": 96.0
+					},
+					"text": "",
+					"type": "Button",
+					"visible": true
+				},
+				"description": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 24.0
+					},
+					"name": "choiceDescriptionText",
+					"rect": {
+						"h": 29.0,
+						"w": 170.0,
+						"x": 186.0,
+						"y": 121.0
+					},
+					"text": "가장 가까운 적을 자동 조준해 실제 투사체를 발사합니다.",
+					"type": "Label",
+					"visible": true
+				},
+				"meta": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 24.0
+					},
+					"name": "choiceMetaText",
+					"rect": {
+						"h": 29.0,
+						"w": 170.0,
+						"x": 186.0,
+						"y": 155.0
+					},
+					"text": "기본 피해 10 / 쿨타임 0.62초\n범위 155",
+					"type": "Label",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 15.0
+					},
+					"name": "choiceTitleText",
+					"rect": {
+						"h": 18.0,
+						"w": 170.0,
+						"x": 186.0,
+						"y": 100.0
+					},
+					"text": "원거리",
+					"type": "Label",
+					"visible": true
+				}
+			},
+			{
+				"card": {
+					"custom_min": {
+						"x": 168.0,
+						"y": 123.0
+					},
+					"name": "@Button@214",
+					"rect": {
+						"h": 123.0,
+						"w": 178.0,
+						"x": 364.0,
+						"y": 96.0
+					},
+					"text": "",
+					"type": "Button",
+					"visible": true
+				},
+				"description": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 24.0
+					},
+					"name": "choiceDescriptionText",
+					"rect": {
+						"h": 29.0,
+						"w": 170.0,
+						"x": 368.0,
+						"y": 121.0
+					},
+					"text": "이동/목표 방향 앞으로 짧고 강한 베기를 냅니다.",
+					"type": "Label",
+					"visible": true
+				},
+				"meta": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 24.0
+					},
+					"name": "choiceMetaText",
+					"rect": {
+						"h": 29.0,
+						"w": 170.0,
+						"x": 368.0,
+						"y": 155.0
+					},
+					"text": "기본 피해 15 / 쿨타임 0.82초\n범위 76",
+					"type": "Label",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 15.0
+					},
+					"name": "choiceTitleText",
+					"rect": {
+						"h": 18.0,
+						"w": 170.0,
+						"x": 368.0,
+						"y": 100.0
+					},
+					"text": "근접",
+					"type": "Label",
+					"visible": true
+				}
+			},
+			{
+				"card": {
+					"custom_min": {
+						"x": 168.0,
+						"y": 123.0
+					},
+					"name": "@Button@215",
+					"rect": {
+						"h": 123.0,
+						"w": 178.0,
+						"x": 546.0,
+						"y": 96.0
+					},
+					"text": "",
+					"type": "Button",
+					"visible": true
+				},
+				"description": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 24.0
+					},
+					"name": "choiceDescriptionText",
+					"rect": {
+						"h": 29.0,
+						"w": 170.0,
+						"x": 550.0,
+						"y": 121.0
+					},
+					"text": "상시 보이는 원형 필드가 주기적으로 범위 피해를 줍니다.",
+					"type": "Label",
+					"visible": true
+				},
+				"meta": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 24.0
+					},
+					"name": "choiceMetaText",
+					"rect": {
+						"h": 29.0,
+						"w": 170.0,
+						"x": 550.0,
+						"y": 155.0
+					},
+					"text": "기본 피해 5 / 쿨타임 0.38초\n범위 104",
+					"type": "Label",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 15.0
+					},
+					"name": "choiceTitleText",
+					"rect": {
+						"h": 18.0,
+						"w": 170.0,
+						"x": 550.0,
+						"y": 100.0
+					},
+					"text": "오라",
+					"type": "Label",
+					"visible": true
+				}
+			},
+			{
+				"card": {
+					"custom_min": {
+						"x": 168.0,
+						"y": 123.0
+					},
+					"name": "@Button@216",
+					"rect": {
+						"h": 123.0,
+						"w": 178.0,
+						"x": 182.0,
+						"y": 223.0
+					},
+					"text": "",
+					"type": "Button",
+					"visible": true
+				},
+				"description": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 24.0
+					},
+					"name": "choiceDescriptionText",
+					"rect": {
+						"h": 29.0,
+						"w": 170.0,
+						"x": 186.0,
+						"y": 248.0
+					},
+					"text": "전방에 반응형 폭발물을 설치하고 적 접근 즉시 폭발시킵니다.",
+					"type": "Label",
+					"visible": true
+				},
+				"meta": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 24.0
+					},
+					"name": "choiceMetaText",
+					"rect": {
+						"h": 29.0,
+						"w": 170.0,
+						"x": 186.0,
+						"y": 282.0
+					},
+					"text": "기본 피해 23 / 쿨타임 2.15초\n범위 64",
+					"type": "Label",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 15.0
+					},
+					"name": "choiceTitleText",
+					"rect": {
+						"h": 18.0,
+						"w": 170.0,
+						"x": 186.0,
+						"y": 227.0
+					},
+					"text": "설치",
+					"type": "Label",
+					"visible": true
+				}
+			}
+		],
+		"image": "C:/Users/nadom/Documents/toy-project/tmp/visual_compare/godot_initial_module_915x412.png",
+		"ui": {
+			"choiceColumns": 3,
+			"choiceDescription": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 28.0
+				},
+				"name": "choiceDescription",
+				"rect": {
+					"h": 28.0,
+					"w": 552.0,
+					"x": 182.0,
+					"y": 63.0
+				},
+				"text": "선택 전까지 게임은 멈춥니다. 이번 런의 기본 공격 방식을 고르세요.",
+				"type": "RichTextLabel",
+				"visible": true
+			},
+			"choiceGrid": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "choiceGrid",
+				"rect": {
+					"h": 287.0,
+					"w": 542.0,
+					"x": 182.0,
+					"y": 96.0
+				},
+				"type": "GridContainer",
+				"visible": true
+			},
+			"choiceOverlay": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "itemOverlay",
+				"rect": {
+					"h": 412.0,
+					"w": 915.0,
+					"x": 0.0,
+					"y": 0.0
+				},
+				"type": "ColorRect",
+				"visible": true
+			},
+			"choicePanel": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "itemPanel",
+				"rect": {
+					"h": 365.0,
+					"w": 560.0,
+					"x": 178.0,
+					"y": 23.0
+				},
+				"type": "Panel",
+				"visible": true
+			},
+			"choiceScroll": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "ChoiceScroll",
+				"rect": {
+					"h": 288.0,
+					"w": 552.0,
+					"x": 182.0,
+					"y": 96.0
+				},
+				"type": "ScrollContainer",
+				"visible": true
+			},
+			"choiceTitle": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 26.0
+				},
+				"name": "choiceTitle",
+				"rect": {
+					"h": 27.0,
+					"w": 552.0,
+					"x": 182.0,
+					"y": 31.0
+				},
+				"text": "시작 1차 공격 모듈 선택",
+				"type": "Label",
+				"visible": true
+			},
+			"combatHud": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "combatHud",
+				"rect": {
+					"h": 124.0,
+					"w": 156.0,
+					"x": 6.0,
+					"y": 6.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"debugPanel": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "debugPanel",
+				"rect": {
+					"h": 260.0,
+					"w": 250.0,
+					"x": 659.0,
+					"y": 146.0
+				},
+				"type": "PanelContainer",
+				"visible": false
+			},
+			"difficultyHud": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "difficultyHud",
+				"rect": {
+					"h": 60.0,
+					"w": 210.0,
+					"x": 353.0,
+					"y": 5.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"economyHud": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "economyHud",
+				"rect": {
+					"h": 124.0,
+					"w": 170.0,
+					"x": 739.0,
+					"y": 6.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"statusPanel": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "statusPanel",
+				"rect": {
+					"h": 76.0,
+					"w": 194.0,
+					"x": 96.0,
+					"y": 328.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"viewport": {
+				"h": 412,
+				"w": 915
+			}
+		}
+	},
+	"mobile_portrait_initial_module": {
+		"choices": [
+			{
+				"card": {
+					"custom_min": {
+						"x": 330.0,
+						"y": 118.0
+					},
+					"name": "moduleChoice",
+					"rect": {
+						"h": 118.0,
+						"w": 350.0,
+						"x": 11.0,
+						"y": 309.0
+					},
+					"text": "",
+					"type": "Button",
+					"visible": true
+				},
+				"description": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 20.0
+					},
+					"name": "choiceDescriptionText",
+					"rect": {
+						"h": 20.0,
+						"w": 342.0,
+						"x": 15.0,
+						"y": 332.0
+					},
+					"text": "가장 가까운 적을 자동 조준해 실제 투사체를 발사합니다.",
+					"type": "Label",
+					"visible": true
+				},
+				"meta": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 24.0
+					},
+					"name": "choiceMetaText",
+					"rect": {
+						"h": 29.0,
+						"w": 342.0,
+						"x": 15.0,
+						"y": 357.0
+					},
+					"text": "기본 피해 10 / 쿨타임 0.62초\n범위 155",
+					"type": "Label",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 14.0
+					},
+					"name": "choiceTitleText",
+					"rect": {
+						"h": 16.0,
+						"w": 342.0,
+						"x": 15.0,
+						"y": 313.0
+					},
+					"text": "원거리",
+					"type": "Label",
+					"visible": true
+				}
+			},
+			{
+				"card": {
+					"custom_min": {
+						"x": 330.0,
+						"y": 118.0
+					},
+					"name": "@Button@214",
+					"rect": {
+						"h": 118.0,
+						"w": 350.0,
+						"x": 11.0,
+						"y": 431.0
+					},
+					"text": "",
+					"type": "Button",
+					"visible": true
+				},
+				"description": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 20.0
+					},
+					"name": "choiceDescriptionText",
+					"rect": {
+						"h": 20.0,
+						"w": 342.0,
+						"x": 15.0,
+						"y": 454.0
+					},
+					"text": "이동/목표 방향 앞으로 짧고 강한 베기를 냅니다.",
+					"type": "Label",
+					"visible": true
+				},
+				"meta": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 24.0
+					},
+					"name": "choiceMetaText",
+					"rect": {
+						"h": 29.0,
+						"w": 342.0,
+						"x": 15.0,
+						"y": 479.0
+					},
+					"text": "기본 피해 15 / 쿨타임 0.82초\n범위 76",
+					"type": "Label",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 14.0
+					},
+					"name": "choiceTitleText",
+					"rect": {
+						"h": 16.0,
+						"w": 342.0,
+						"x": 15.0,
+						"y": 435.0
+					},
+					"text": "근접",
+					"type": "Label",
+					"visible": true
+				}
+			},
+			{
+				"card": {
+					"custom_min": {
+						"x": 330.0,
+						"y": 118.0
+					},
+					"name": "@Button@215",
+					"rect": {
+						"h": 118.0,
+						"w": 350.0,
+						"x": 11.0,
+						"y": 553.0
+					},
+					"text": "",
+					"type": "Button",
+					"visible": true
+				},
+				"description": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 20.0
+					},
+					"name": "choiceDescriptionText",
+					"rect": {
+						"h": 20.0,
+						"w": 342.0,
+						"x": 15.0,
+						"y": 576.0
+					},
+					"text": "상시 보이는 원형 필드가 주기적으로 범위 피해를 줍니다.",
+					"type": "Label",
+					"visible": true
+				},
+				"meta": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 24.0
+					},
+					"name": "choiceMetaText",
+					"rect": {
+						"h": 29.0,
+						"w": 342.0,
+						"x": 15.0,
+						"y": 601.0
+					},
+					"text": "기본 피해 5 / 쿨타임 0.38초\n범위 104",
+					"type": "Label",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 14.0
+					},
+					"name": "choiceTitleText",
+					"rect": {
+						"h": 16.0,
+						"w": 342.0,
+						"x": 15.0,
+						"y": 557.0
+					},
+					"text": "오라",
+					"type": "Label",
+					"visible": true
+				}
+			},
+			{
+				"card": {
+					"custom_min": {
+						"x": 330.0,
+						"y": 118.0
+					},
+					"name": "@Button@216",
+					"rect": {
+						"h": 118.0,
+						"w": 350.0,
+						"x": 11.0,
+						"y": 675.0
+					},
+					"text": "",
+					"type": "Button",
+					"visible": true
+				},
+				"description": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 20.0
+					},
+					"name": "choiceDescriptionText",
+					"rect": {
+						"h": 20.0,
+						"w": 342.0,
+						"x": 15.0,
+						"y": 698.0
+					},
+					"text": "전방에 반응형 폭발물을 설치하고 적 접근 즉시 폭발시킵니다.",
+					"type": "Label",
+					"visible": true
+				},
+				"meta": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 24.0
+					},
+					"name": "choiceMetaText",
+					"rect": {
+						"h": 29.0,
+						"w": 342.0,
+						"x": 15.0,
+						"y": 723.0
+					},
+					"text": "기본 피해 23 / 쿨타임 2.15초\n범위 64",
+					"type": "Label",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 14.0
+					},
+					"name": "choiceTitleText",
+					"rect": {
+						"h": 16.0,
+						"w": 342.0,
+						"x": 15.0,
+						"y": 679.0
+					},
+					"text": "설치",
+					"type": "Label",
+					"visible": true
+				}
+			}
+		],
+		"image": "C:/Users/nadom/Documents/toy-project/tmp/visual_compare/godot_initial_module_390x844.png",
+		"ui": {
+			"choiceColumns": 1,
+			"choiceDescription": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 28.0
+				},
+				"name": "choiceDescription",
+				"rect": {
+					"h": 28.0,
+					"w": 368.0,
+					"x": 11.0,
+					"y": 276.0
+				},
+				"text": "선택 전까지 게임은 멈춥니다. 이번 런의 기본 공격 방식을 고르세요.",
+				"type": "RichTextLabel",
+				"visible": true
+			},
+			"choiceGrid": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "choiceGrid",
+				"rect": {
+					"h": 484.0,
+					"w": 350.0,
+					"x": 11.0,
+					"y": 309.0
+				},
+				"type": "GridContainer",
+				"visible": true
+			},
+			"choiceOverlay": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "itemOverlay",
+				"rect": {
+					"h": 844.0,
+					"w": 390.0,
+					"x": 0.0,
+					"y": 0.0
+				},
+				"type": "ColorRect",
+				"visible": true
+			},
+			"choicePanel": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "itemPanel",
+				"rect": {
+					"h": 365.0,
+					"w": 376.0,
+					"x": 7.0,
+					"y": 239.0
+				},
+				"type": "Panel",
+				"visible": true
+			},
+			"choiceScroll": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "ChoiceScroll",
+				"rect": {
+					"h": 291.0,
+					"w": 368.0,
+					"x": 11.0,
+					"y": 309.0
+				},
+				"type": "ScrollContainer",
+				"visible": true
+			},
+			"choiceTitle": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 24.0
+				},
+				"name": "choiceTitle",
+				"rect": {
+					"h": 24.0,
+					"w": 368.0,
+					"x": 11.0,
+					"y": 247.0
+				},
+				"text": "시작 1차 공격 모듈 선택",
+				"type": "Label",
+				"visible": true
+			},
+			"combatHud": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "combatHud",
+				"rect": {
+					"h": 170.0,
+					"w": 183.0,
+					"x": 6.0,
+					"y": 6.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"debugPanel": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "debugPanel",
+				"rect": {
+					"h": 260.0,
+					"w": 250.0,
+					"x": 134.0,
+					"y": 578.0
+				},
+				"type": "PanelContainer",
+				"visible": false
+			},
+			"difficultyHud": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "difficultyHud",
+				"rect": {
+					"h": 60.0,
+					"w": 150.0,
+					"x": 120.0,
+					"y": 5.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"economyHud": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "economyHud",
+				"rect": {
+					"h": 170.0,
+					"w": 183.0,
+					"x": 201.0,
+					"y": 6.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"statusPanel": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "statusPanel",
+				"rect": {
+					"h": 136.0,
+					"w": 374.0,
+					"x": 8.0,
+					"y": 590.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"viewport": {
+				"h": 844,
+				"w": 390
+			}
+		}
+	},
+	"pc_initial_module": {
+		"choices": [
+			{
+				"card": {
+					"custom_min": {
+						"x": 275.0,
+						"y": 161.0
+					},
+					"name": "moduleChoice",
+					"rect": {
+						"h": 161.0,
+						"w": 276.0,
+						"x": 528.0,
+						"y": 406.0
+					},
+					"text": "",
+					"type": "Button",
+					"visible": true
+				},
+				"description": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 30.0
+					},
+					"name": "choiceDescriptionText",
+					"rect": {
+						"h": 39.0,
+						"w": 262.0,
+						"x": 535.0,
+						"y": 439.0
+					},
+					"text": "가장 가까운 적을 자동 조준해 실제 투사체를 발사합니다.",
+					"type": "Label",
+					"visible": true
+				},
+				"meta": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 30.0
+					},
+					"name": "choiceMetaText",
+					"rect": {
+						"h": 39.0,
+						"w": 262.0,
+						"x": 535.0,
+						"y": 484.0
+					},
+					"text": "기본 피해 10 / 쿨타임 0.62초\n범위 155",
+					"type": "Label",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 19.0
+					},
+					"name": "choiceTitleText",
+					"rect": {
+						"h": 22.0,
+						"w": 262.0,
+						"x": 535.0,
+						"y": 413.0
+					},
+					"text": "원거리",
+					"type": "Label",
+					"visible": true
+				}
+			},
+			{
+				"card": {
+					"custom_min": {
+						"x": 275.0,
+						"y": 161.0
+					},
+					"name": "@Button@214",
+					"rect": {
+						"h": 161.0,
+						"w": 275.0,
+						"x": 816.0,
+						"y": 406.0
+					},
+					"text": "",
+					"type": "Button",
+					"visible": true
+				},
+				"description": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 30.0
+					},
+					"name": "choiceDescriptionText",
+					"rect": {
+						"h": 30.0,
+						"w": 261.0,
+						"x": 823.0,
+						"y": 439.0
+					},
+					"text": "이동/목표 방향 앞으로 짧고 강한 베기를 냅니다.",
+					"type": "Label",
+					"visible": true
+				},
+				"meta": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 30.0
+					},
+					"name": "choiceMetaText",
+					"rect": {
+						"h": 39.0,
+						"w": 261.0,
+						"x": 823.0,
+						"y": 475.0
+					},
+					"text": "기본 피해 15 / 쿨타임 0.82초\n범위 76",
+					"type": "Label",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 19.0
+					},
+					"name": "choiceTitleText",
+					"rect": {
+						"h": 22.0,
+						"w": 261.0,
+						"x": 823.0,
+						"y": 413.0
+					},
+					"text": "근접",
+					"type": "Label",
+					"visible": true
+				}
+			},
+			{
+				"card": {
+					"custom_min": {
+						"x": 275.0,
+						"y": 161.0
+					},
+					"name": "@Button@215",
+					"rect": {
+						"h": 161.0,
+						"w": 275.0,
+						"x": 1103.0,
+						"y": 406.0
+					},
+					"text": "",
+					"type": "Button",
+					"visible": true
+				},
+				"description": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 30.0
+					},
+					"name": "choiceDescriptionText",
+					"rect": {
+						"h": 39.0,
+						"w": 261.0,
+						"x": 1110.0,
+						"y": 439.0
+					},
+					"text": "상시 보이는 원형 필드가 주기적으로 범위 피해를 줍니다.",
+					"type": "Label",
+					"visible": true
+				},
+				"meta": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 30.0
+					},
+					"name": "choiceMetaText",
+					"rect": {
+						"h": 39.0,
+						"w": 261.0,
+						"x": 1110.0,
+						"y": 484.0
+					},
+					"text": "기본 피해 5 / 쿨타임 0.38초\n범위 104",
+					"type": "Label",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 19.0
+					},
+					"name": "choiceTitleText",
+					"rect": {
+						"h": 22.0,
+						"w": 261.0,
+						"x": 1110.0,
+						"y": 413.0
+					},
+					"text": "오라",
+					"type": "Label",
+					"visible": true
+				}
+			},
+			{
+				"card": {
+					"custom_min": {
+						"x": 275.0,
+						"y": 161.0
+					},
+					"name": "@Button@216",
+					"rect": {
+						"h": 161.0,
+						"w": 276.0,
+						"x": 528.0,
+						"y": 579.0
+					},
+					"text": "",
+					"type": "Button",
+					"visible": true
+				},
+				"description": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 30.0
+					},
+					"name": "choiceDescriptionText",
+					"rect": {
+						"h": 39.0,
+						"w": 262.0,
+						"x": 535.0,
+						"y": 612.0
+					},
+					"text": "전방에 반응형 폭발물을 설치하고 적 접근 즉시 폭발시킵니다.",
+					"type": "Label",
+					"visible": true
+				},
+				"meta": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 30.0
+					},
+					"name": "choiceMetaText",
+					"rect": {
+						"h": 39.0,
+						"w": 262.0,
+						"x": 535.0,
+						"y": 657.0
+					},
+					"text": "기본 피해 23 / 쿨타임 2.15초\n범위 64",
+					"type": "Label",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 19.0
+					},
+					"name": "choiceTitleText",
+					"rect": {
+						"h": 22.0,
+						"w": 262.0,
+						"x": 535.0,
+						"y": 586.0
+					},
+					"text": "설치",
+					"type": "Label",
+					"visible": true
+				}
+			}
+		],
+		"image": "C:/Users/nadom/Documents/toy-project/tmp/visual_compare/godot_initial_module_1920x1080.png",
+		"ui": {
+			"choiceColumns": 3,
+			"choiceDescription": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 24.0
+				},
+				"name": "choiceDescription",
+				"rect": {
+					"h": 24.0,
+					"w": 864.0,
+					"x": 528.0,
+					"y": 375.0
+				},
+				"text": "선택 전까지 게임은 멈춥니다. 이번 런의 기본 공격 방식을 고르세요.",
+				"type": "RichTextLabel",
+				"visible": true
+			},
+			"choiceGrid": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "choiceGrid",
+				"rect": {
+					"h": 340.0,
+					"w": 850.0,
+					"x": 528.0,
+					"y": 406.0
+				},
+				"type": "GridContainer",
+				"visible": true
+			},
+			"choiceOverlay": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "itemOverlay",
+				"rect": {
+					"h": 1080.0,
+					"w": 1920.0,
+					"x": 0.0,
+					"y": 0.0
+				},
+				"type": "ColorRect",
+				"visible": true
+			},
+			"choicePanel": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "itemPanel",
+				"rect": {
+					"h": 450.0,
+					"w": 900.0,
+					"x": 510.0,
+					"y": 315.0
+				},
+				"type": "Panel",
+				"visible": true
+			},
+			"choiceScroll": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "ChoiceScroll",
+				"rect": {
+					"h": 341.0,
+					"w": 864.0,
+					"x": 528.0,
+					"y": 406.0
+				},
+				"type": "ScrollContainer",
+				"visible": true
+			},
+			"choiceTitle": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 32.0
+				},
+				"name": "choiceTitle",
+				"rect": {
+					"h": 35.0,
+					"w": 864.0,
+					"x": 528.0,
+					"y": 333.0
+				},
+				"text": "시작 1차 공격 모듈 선택",
+				"type": "Label",
+				"visible": true
+			},
+			"combatHud": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "combatHud",
+				"rect": {
+					"h": 360.0,
+					"w": 270.0,
+					"x": 12.0,
+					"y": 12.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"debugPanel": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "debugPanel",
+				"rect": {
+					"h": 616.0,
+					"w": 250.0,
+					"x": 1658.0,
+					"y": 452.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"difficultyHud": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "difficultyHud",
+				"rect": {
+					"h": 67.0,
+					"w": 340.0,
+					"x": 790.0,
+					"y": 10.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"economyHud": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "economyHud",
+				"rect": {
+					"h": 517.0,
+					"w": 255.0,
+					"x": 1653.0,
+					"y": 12.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"statusPanel": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "statusPanel",
+				"rect": {
+					"h": 561.0,
+					"w": 270.0,
+					"x": 12.0,
+					"y": 507.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"viewport": {
+				"h": 1080,
+				"w": 1920
+			}
+		}
+	},
+	"pc_popup_cluster": {
+		"image": "C:/Users/nadom/Documents/toy-project/tmp/visual_compare/godot_popup_cluster_1920x1080.png",
+		"popups": [
+			{
+				"body": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 68.0
+					},
+					"name": "@RichTextLabel@250",
+					"rect": {
+						"h": 68.0,
+						"w": 308.0,
+						"x": 620.0,
+						"y": 860.0
+					},
+					"text": "이 창을 유지하는 동안 후원 효과가 적용됩니다. 끝까지 유지하면 시청 보상 상태가 기록됩니다.\n광고 유지 1% / 완료 시 보상 지급\n열려 있는 동안 전투 버프가 적용됩니다.",
+					"type": "RichTextLabel",
+					"visible": true
+				},
+				"buttons": [
+					{
+						"custom_min": {
+							"x": 56.0,
+							"y": 30.0
+						},
+						"name": "@Label@258",
+						"rect": {
+							"h": 30.0,
+							"w": 56.0,
+							"x": 620.0,
+							"y": 1040.0
+						},
+						"text": "20.0초",
+						"type": "Label",
+						"visible": true
+					},
+					{
+						"custom_min": {
+							"x": 96.0,
+							"y": 34.0
+						},
+						"name": "@Button@259",
+						"rect": {
+							"h": 34.0,
+							"w": 96.0,
+							"x": 680.0,
+							"y": 1038.0
+						},
+						"text": "중단하기",
+						"type": "Button",
+						"visible": true
+					}
+				],
+				"controls": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 0.0
+					},
+					"name": "@HFlowContainer@257",
+					"rect": {
+						"h": 34.0,
+						"w": 308.0,
+						"x": 620.0,
+						"y": 1038.0
+					},
+					"type": "HFlowContainer",
+					"visible": true
+				},
+				"detail": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 60.0
+					},
+					"name": "@RichTextLabel@253",
+					"rect": {
+						"h": 60.0,
+						"w": 308.0,
+						"x": 620.0,
+						"y": 932.0
+					},
+					"text": "열려 있는 동안: [b]피해 +20%[/b]\n남은 시간: 19.7초\n난이도 상승 없음. 중간에 닫으면 완료 보상은 취소됩니다.",
+					"type": "RichTextLabel",
+					"visible": true
+				},
+				"id": 1,
+				"panel": {
+					"custom_min": {
+						"x": 320.0,
+						"y": 244.0
+					},
+					"name": "popupWindow_1",
+					"rect": {
+						"h": 248.0,
+						"w": 320.0,
+						"x": 614.0,
+						"y": 830.0
+					},
+					"type": "PanelContainer",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 0.0
+					},
+					"name": "@Label@244",
+					"rect": {
+						"h": 19.0,
+						"w": 286.0,
+						"x": 618.0,
+						"y": 834.0
+					},
+					"text": "스폰서 보상 광고",
+					"type": "Label",
+					"visible": true
+				}
+			},
+			{
+				"body": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 68.0
+					},
+					"name": "@RichTextLabel@269",
+					"rect": {
+						"h": 68.0,
+						"w": 374.0,
+						"x": 620.0,
+						"y": 790.0
+					},
+					"text": "미확인 아이템을 패키지 가격으로 즉시 구매하세요. 등급은 공개되지만 내용물은 결제 후 확정됩니다.\n상점 할인: 0%\n만료까지 17.7초",
+					"type": "RichTextLabel",
+					"visible": true
+				},
+				"buttons": [
+					{
+						"custom_min": {
+							"x": 178.0,
+							"y": 48.0
+						},
+						"name": "@Button@277",
+						"rect": {
+							"h": 60.0,
+							"w": 178.0,
+							"x": 620.0,
+							"y": 953.0
+						},
+						"text": "[Common] 보급형 미확인 아이템 - 22G\n미확인 아이템 즉시 획득",
+						"type": "Button",
+						"visible": true
+					},
+					{
+						"custom_min": {
+							"x": 178.0,
+							"y": 48.0
+						},
+						"name": "@Button@278",
+						"rect": {
+							"h": 60.0,
+							"w": 178.0,
+							"x": 802.0,
+							"y": 953.0
+						},
+						"text": "[Rare] 희귀 미확인 아이템 - 48G\n미확인 아이템 즉시 획득",
+						"type": "Button",
+						"visible": true
+					},
+					{
+						"custom_min": {
+							"x": 178.0,
+							"y": 48.0
+						},
+						"name": "@Button@279",
+						"rect": {
+							"h": 48.0,
+							"w": 178.0,
+							"x": 620.0,
+							"y": 1017.0
+						},
+						"text": "[Epic] 특급 미확인 아이템 - 88G\n미확인 아이템 즉시 획득",
+						"type": "Button",
+						"visible": true
+					},
+					{
+						"custom_min": {
+							"x": 96.0,
+							"y": 34.0
+						},
+						"name": "@Button@280",
+						"rect": {
+							"h": 48.0,
+							"w": 96.0,
+							"x": 802.0,
+							"y": 1017.0
+						},
+						"text": "닫기",
+						"type": "Button",
+						"visible": true
+					}
+				],
+				"controls": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 0.0
+					},
+					"name": "@HFlowContainer@276",
+					"rect": {
+						"h": 112.0,
+						"w": 374.0,
+						"x": 620.0,
+						"y": 953.0
+					},
+					"type": "HFlowContainer",
+					"visible": true
+				},
+				"detail": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 75.0
+					},
+					"name": "@RichTextLabel@272",
+					"rect": {
+						"h": 75.0,
+						"w": 374.0,
+						"x": 620.0,
+						"y": 862.0
+					},
+					"text": "[b]랜덤 구매 효율 +160%[/b]\n구매하면 미확인 아이템 1개를 즉시 얻습니다.\n팝업 스토어는 난이도를 올리지 않습니다.\n상품: [Common] 보급형 미확인 아이템 22G / [Rare] 희귀 미확인 아이템 48G / [Epic] 특급 미확인 아이템 88G",
+					"type": "RichTextLabel",
+					"visible": true
+				},
+				"id": 2,
+				"panel": {
+					"custom_min": {
+						"x": 386.0,
+						"y": 305.0
+					},
+					"name": "popupWindow_2",
+					"rect": {
+						"h": 311.0,
+						"w": 386.0,
+						"x": 614.0,
+						"y": 760.0
+					},
+					"type": "PanelContainer",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 0.0
+					},
+					"name": "@Label@263",
+					"rect": {
+						"h": 19.0,
+						"w": 352.0,
+						"x": 618.0,
+						"y": 764.0
+					},
+					"text": "팝업 스토어",
+					"type": "Label",
+					"visible": true
+				}
+			},
+			{
+				"body": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 85.0
+					},
+					"name": "@RichTextLabel@290",
+					"rect": {
+						"h": 85.0,
+						"w": 328.0,
+						"x": 620.0,
+						"y": 646.0
+					},
+					"text": "POP 팝업 테마주 실시간 시세입니다. 본 시세는 비정상적 팝업 시장 변동성을 반영합니다.\n[b]팝업 테마주 (POP)[/b]\n현재가: 100G ▲ +0.0%\n시장 심리: [b]조용한 장세[/b]",
+					"type": "RichTextLabel",
+					"visible": true
+				},
+				"buttons": [
+					{
+						"custom_min": {
+							"x": 96.0,
+							"y": 34.0
+						},
+						"name": "@Button@299",
+						"rect": {
+							"h": 34.0,
+							"w": 96.0,
+							"x": 620.0,
+							"y": 901.0
+						},
+						"text": "1주 매수",
+						"type": "Button",
+						"visible": true
+					},
+					{
+						"custom_min": {
+							"x": 96.0,
+							"y": 34.0
+						},
+						"name": "@Button@300",
+						"rect": {
+							"h": 34.0,
+							"w": 96.0,
+							"x": 720.0,
+							"y": 901.0
+						},
+						"text": "최대 매수",
+						"type": "Button",
+						"visible": true
+					},
+					{
+						"custom_min": {
+							"x": 96.0,
+							"y": 34.0
+						},
+						"name": "@Button@301",
+						"rect": {
+							"h": 34.0,
+							"w": 96.0,
+							"x": 820.0,
+							"y": 901.0
+						},
+						"text": "1주 매도",
+						"type": "Button",
+						"visible": true
+					},
+					{
+						"custom_min": {
+							"x": 96.0,
+							"y": 34.0
+						},
+						"name": "@Button@302",
+						"rect": {
+							"h": 34.0,
+							"w": 96.0,
+							"x": 620.0,
+							"y": 939.0
+						},
+						"text": "전량 매도",
+						"type": "Button",
+						"visible": true
+					}
+				],
+				"controls": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 0.0
+					},
+					"name": "@HFlowContainer@297",
+					"rect": {
+						"h": 72.0,
+						"w": 328.0,
+						"x": 620.0,
+						"y": 901.0
+					},
+					"type": "HFlowContainer",
+					"visible": true
+				},
+				"detail": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 58.0
+					},
+					"name": "@RichTextLabel@293",
+					"rect": {
+						"h": 58.0,
+						"w": 328.0,
+						"x": 620.0,
+						"y": 735.0
+					},
+					"text": "보유: 0주 / 평단: 0G\n평가액: 0G\n평가손익: +0G (+0.0%)",
+					"type": "RichTextLabel",
+					"visible": true
+				},
+				"id": 3,
+				"panel": {
+					"custom_min": {
+						"x": 340.0,
+						"y": 363.0
+					},
+					"name": "popupWindow_3",
+					"rect": {
+						"h": 363.0,
+						"w": 340.0,
+						"x": 614.0,
+						"y": 616.0
+					},
+					"type": "PanelContainer",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 0.0
+					},
+					"name": "@Label@284",
+					"rect": {
+						"h": 19.0,
+						"w": 306.0,
+						"x": 618.0,
+						"y": 620.0
+					},
+					"text": "팝업 증권 LIVE",
+					"type": "Label",
+					"visible": true
+				}
+			},
+			{
+				"body": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 76.0
+					},
+					"name": "@RichTextLabel@312",
+					"rect": {
+						"h": 76.0,
+						"w": 408.0,
+						"x": 781.0,
+						"y": 708.0
+					},
+					"text": "보스 처치 후에만 열리는 한정 보상 패키지입니다. 아이템 6개 중 2개를 직접 선택해 런 가치를 극대화하세요.",
+					"type": "RichTextLabel",
+					"visible": true
+				},
+				"buttons": [
+					{
+						"custom_min": {
+							"x": 184.0,
+							"y": 44.0
+						},
+						"name": "@Button@320",
+						"rect": {
+							"h": 44.0,
+							"w": 184.0,
+							"x": 781.0,
+							"y": 916.0
+						},
+						"text": "패키지 구매 - 80G\n아이템 6개 중 2개 선택",
+						"type": "Button",
+						"visible": true
+					},
+					{
+						"custom_min": {
+							"x": 96.0,
+							"y": 42.0
+						},
+						"name": "@Button@321",
+						"rect": {
+							"h": 44.0,
+							"w": 96.0,
+							"x": 969.0,
+							"y": 916.0
+						},
+						"text": "닫기",
+						"type": "Button",
+						"visible": true
+					}
+				],
+				"controls": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 0.0
+					},
+					"name": "@HFlowContainer@319",
+					"rect": {
+						"h": 44.0,
+						"w": 408.0,
+						"x": 781.0,
+						"y": 916.0
+					},
+					"type": "HFlowContainer",
+					"visible": true
+				},
+				"detail": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 124.0
+					},
+					"name": "@RichTextLabel@315",
+					"rect": {
+						"h": 124.0,
+						"w": 408.0,
+						"x": 781.0,
+						"y": 788.0
+					},
+					"text": "[b]보상 선택 효율 +260%[/b]\n패키지 가격: [b]80G[/b]\n선결제 후 아이템 6개 중 2개를 선택합니다.\n후보: [Rare] 정리 루틴 타이머 / [Rare] 팝업 공명기 / [Epic] 닫기 콤보 / [Common] 응급 혈액팩 / [Cursed] 수상한 부스터 / [Rare] 정리 콤보",
+					"type": "RichTextLabel",
+					"visible": true
+				},
+				"id": 4,
+				"panel": {
+					"custom_min": {
+						"x": 420.0,
+						"y": 390.0
+					},
+					"name": "popupWindow_4",
+					"rect": {
+						"h": 390.0,
+						"w": 420.0,
+						"x": 775.0,
+						"y": 678.0
+					},
+					"type": "PanelContainer",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 0.0
+					},
+					"name": "@Label@306",
+					"rect": {
+						"h": 19.0,
+						"w": 386.0,
+						"x": 779.0,
+						"y": 682.0
+					},
+					"text": "보스 보상 패키지 AD",
+					"type": "Label",
+					"visible": true
+				}
+			},
+			{
+				"body": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 85.0
+					},
+					"name": "@RichTextLabel@331",
+					"rect": {
+						"h": 85.0,
+						"w": 308.0,
+						"x": 831.0,
+						"y": 354.0
+					},
+					"text": "검증되지 않은 확장 기능이 대기 중입니다. 방치하면 열려 있는 유용한 팝업 하나를 오염시켜 보상과 기능을 손상시킵니다.\n감염 대상: 스폰서 보상 광고\n감염 진행 4%",
+					"type": "RichTextLabel",
+					"visible": true
+				},
+				"buttons": [
+					{
+						"custom_min": {
+							"x": 96.0,
+							"y": 34.0
+						},
+						"name": "@Button@339",
+						"rect": {
+							"h": 34.0,
+							"w": 96.0,
+							"x": 831.0,
+							"y": 519.0
+						},
+						"text": "확장 차단",
+						"type": "Button",
+						"visible": true
+					}
+				],
+				"controls": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 0.0
+					},
+					"name": "@HFlowContainer@338",
+					"rect": {
+						"h": 34.0,
+						"w": 308.0,
+						"x": 831.0,
+						"y": 519.0
+					},
+					"type": "HFlowContainer",
+					"visible": true
+				},
+				"detail": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 60.0
+					},
+					"name": "@RichTextLabel@334",
+					"rect": {
+						"h": 60.0,
+						"w": 308.0,
+						"x": 831.0,
+						"y": 443.0
+					},
+					"text": "감염 대상: 스폰서 보상 광고\n감염 진행 4%\n막대가 차기 전에 이 창을 닫으면 감염을 막을 수 있습니다.",
+					"type": "RichTextLabel",
+					"visible": true
+				},
+				"id": 5,
+				"panel": {
+					"custom_min": {
+						"x": 320.0,
+						"y": 241.0
+					},
+					"name": "popupWindow_5",
+					"rect": {
+						"h": 241.0,
+						"w": 320.0,
+						"x": 825.0,
+						"y": 324.0
+					},
+					"type": "PanelContainer",
+					"visible": true
+				},
+				"title": {
+					"custom_min": {
+						"x": 0.0,
+						"y": 0.0
+					},
+					"name": "@Label@325",
+					"rect": {
+						"h": 19.0,
+						"w": 286.0,
+						"x": 829.0,
+						"y": 328.0
+					},
+					"text": "무료 보안 확장 프로그램",
+					"type": "Label",
+					"visible": true
+				}
+			}
+		],
+		"ui": {
+			"choiceColumns": 3,
+			"choiceDescription": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 24.0
+				},
+				"name": "choiceDescription",
+				"rect": {
+					"h": 28.0,
+					"w": 552.0,
+					"x": 528.0,
+					"y": 365.0
+				},
+				"text": "선택 전까지 게임은 멈춥니다. 이번 런의 기본 공격 방식을 고르세요.",
+				"type": "RichTextLabel",
+				"visible": true
+			},
+			"choiceGrid": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "choiceGrid",
+				"rect": {
+					"h": 334.0,
+					"w": 849.0,
+					"x": 528.0,
+					"y": 398.0
+				},
+				"type": "GridContainer",
+				"visible": true
+			},
+			"choiceOverlay": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "itemOverlay",
+				"rect": {
+					"h": 1080.0,
+					"w": 1920.0,
+					"x": 0.0,
+					"y": 0.0
+				},
+				"type": "ColorRect",
+				"visible": false
+			},
+			"choicePanel": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "itemPanel",
+				"rect": {
+					"h": 450.0,
+					"w": 900.0,
+					"x": 510.0,
+					"y": 315.0
+				},
+				"type": "Panel",
+				"visible": true
+			},
+			"choiceScroll": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "ChoiceScroll",
+				"rect": {
+					"h": 288.0,
+					"w": 552.0,
+					"x": 528.0,
+					"y": 398.0
+				},
+				"type": "ScrollContainer",
+				"visible": true
+			},
+			"choiceTitle": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 32.0
+				},
+				"name": "choiceTitle",
+				"rect": {
+					"h": 35.0,
+					"w": 552.0,
+					"x": 528.0,
+					"y": 333.0
+				},
+				"text": "시작 1차 공격 모듈 선택",
+				"type": "Label",
+				"visible": true
+			},
+			"combatHud": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "combatHud",
+				"rect": {
+					"h": 360.0,
+					"w": 270.0,
+					"x": 12.0,
+					"y": 12.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"debugPanel": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "debugPanel",
+				"rect": {
+					"h": 616.0,
+					"w": 250.0,
+					"x": 1658.0,
+					"y": 452.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"difficultyHud": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "difficultyHud",
+				"rect": {
+					"h": 67.0,
+					"w": 340.0,
+					"x": 790.0,
+					"y": 10.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"economyHud": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "economyHud",
+				"rect": {
+					"h": 517.0,
+					"w": 255.0,
+					"x": 1653.0,
+					"y": 12.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"statusPanel": {
+				"custom_min": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"name": "statusPanel",
+				"rect": {
+					"h": 561.0,
+					"w": 270.0,
+					"x": 12.0,
+					"y": 507.0
+				},
+				"type": "PanelContainer",
+				"visible": true
+			},
+			"viewport": {
+				"h": 1080,
+				"w": 1920
+			}
+		}
+	}
+}

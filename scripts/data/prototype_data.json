@@ -43,7 +43,13 @@
     ],
     "bossBaseHP": 504,
     "bossGoldReward": 80,
-    "bossXPReward": 80
+    "bossXPReward": 80,
+    "enableAdvancedBuildChoices": false,
+    "enableBuildOptimizationChoices": false,
+    "enableAttackFormChoices": true,
+    "enableAttackMechanicChoices": true,
+    "enableSynergyChoices": false,
+    "enableDeepeningChoices": false
   },
   "ITEMS": [
     {

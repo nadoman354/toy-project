@@ -1,8 +1,11 @@
 extends SceneTree
 
 const PrototypeGameScript = preload("res://scripts/v2/prototype_game.gd")
+const HtmlLayoutMetrics = preload("res://scripts/ui/html_layout_metrics.gd")
 
 var game
+var test_viewport: SubViewport
+var initialized := false
 var started = false
 var frames = 0
 var result_path = "user://prototype_smoke_result.json"
@@ -33,6 +36,7 @@ var popup_close_reward_gated = false
 var cursed_item_heat_rule_exercised = false
 var choice_card_information_exercised = false
 var hud_original_layout_exercised = false
+var hud_original_layout_breakdown = {}
 var inventory_card_grid_exercised = false
 var stock_popup_detail_panel_exercised = false
 var popup_detail_controls_exercised = false
@@ -42,6 +46,7 @@ var special_popup_detail_breakdown = {}
 var hud_card_layout_exercised = false
 var popup_placement_breakdown = {}
 var debug_panel_layout_exercised = false
+var debug_panel_layout_breakdown = {}
 var mobile_layout_controls_exercised = false
 var mobile_layout_breakdown = {}
 var popup_status_badges_exercised = false
@@ -50,9 +55,19 @@ var popup_telegraph_style_exercised = false
 var popup_telegraph_style_breakdown = {}
 
 func _initialize() -> void:
+	if initialized:
+		return
+	initialized = true
+	test_viewport = SubViewport.new()
+	test_viewport.size = Vector2i(HtmlLayoutMetrics.PC_VIEWPORT_WIDTH, HtmlLayoutMetrics.PC_VIEWPORT_HEIGHT)
+	test_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	root.add_child(test_viewport)
 	game = PrototypeGameScript.new()
-	root.add_child(game)
+	test_viewport.add_child(game)
 	process_frame.connect(_on_process_frame)
+
+func _init() -> void:
+	_initialize()
 
 func _on_process_frame() -> void:
 	if not started:
@@ -284,6 +299,7 @@ func _finish_scenario() -> void:
 		"cursed_item_heat_rule_exercised": cursed_item_heat_rule_exercised,
 		"choice_card_information_exercised": choice_card_information_exercised,
 		"hud_original_layout_exercised": hud_original_layout_exercised,
+		"hud_original_layout_breakdown": hud_original_layout_breakdown,
 		"inventory_card_grid_exercised": inventory_card_grid_exercised,
 		"stock_popup_detail_panel_exercised": stock_popup_detail_panel_exercised,
 		"popup_detail_controls_exercised": popup_detail_controls_exercised,
@@ -292,6 +308,7 @@ func _finish_scenario() -> void:
 		"special_popup_detail_breakdown": special_popup_detail_breakdown,
 		"hud_card_layout_exercised": hud_card_layout_exercised,
 		"debug_panel_layout_exercised": debug_panel_layout_exercised,
+		"debug_panel_layout_breakdown": debug_panel_layout_breakdown,
 		"mobile_layout_controls_exercised": mobile_layout_controls_exercised,
 		"mobile_layout_breakdown": mobile_layout_breakdown,
 		"popup_status_badges_exercised": popup_status_badges_exercised,
@@ -437,6 +454,7 @@ func _verify_popup_placement_rules() -> bool:
 	popup_placement_breakdown = {
 		"ok": ok,
 		"failures": failures,
+		"viewport": viewport,
 		"positions": game.state.openPopups.map(func(popup): return "%s %s %s" % [popup.def.id, popup.position, popup.size]),
 	}
 	game.state.openPopups = saved_open
@@ -595,10 +613,11 @@ func _verify_hud_original_layout() -> bool:
 
 	if game.hud.status_minimized:
 		game.hud._toggle_status()
+	var viewport = game.get_viewport().get_visible_rect().size
 	game.hud._toggle_status()
-	var minimized_ok = game.hud.status_minimized and not game.hud.ui.statusBody.visible and game.hud.ui.statusToggleButton.text == "+" and is_equal_approx(game.hud.ui.statusPanel.offset_top, -52.0)
+	var minimized_ok = game.hud.status_minimized and not game.hud.ui.statusBody.visible and game.hud.ui.statusToggleButton.text == "+" and _control_rect_close(game.hud.ui.statusPanel, HtmlLayoutMetrics.status_hud_rect(viewport, true), viewport)
 	game.hud._toggle_status()
-	var expanded_ok = not game.hud.status_minimized and game.hud.ui.statusBody.visible and game.hud.ui.statusToggleButton.text == "-" and is_equal_approx(game.hud.ui.statusPanel.offset_top, -148.0)
+	var expanded_ok = not game.hud.status_minimized and game.hud.ui.statusBody.visible and game.hud.ui.statusToggleButton.text == "-" and _control_rect_close(game.hud.ui.statusPanel, HtmlLayoutMetrics.status_hud_rect(viewport), viewport)
 
 	if game.hud.status_minimized != saved_status_minimized:
 		game.hud._toggle_status()
@@ -609,6 +628,13 @@ func _verify_hud_original_layout() -> bool:
 	game.state.difficultyPulseTimer = saved_pulse
 	game.hud.update_from_state(game.state)
 
+	hud_original_layout_breakdown = {
+		"investor_hidden_ok": investor_hidden_ok,
+		"investor_visible_ok": investor_visible_ok,
+		"difficulty_color_ok": difficulty_color_ok,
+		"minimized_ok": minimized_ok,
+		"expanded_ok": expanded_ok,
+	}
 	return investor_hidden_ok and investor_visible_ok and difficulty_color_ok and minimized_ok and expanded_ok
 
 func _verify_hud_card_layout() -> bool:
@@ -678,12 +704,18 @@ func _verify_debug_panel_layout() -> bool:
 	if not game.hud.ui.debugBody.visible:
 		game.hud._toggle_debug()
 	game.hud.update_from_state(game.state)
+	var viewport = game.get_viewport().get_visible_rect().size
 	var expanded_text = str(game.hud.ui.debugStats.text)
 	var text_ok = expanded_text.find("성능: FPS") >= 0 and expanded_text.find("현재 가격:") >= 0 and expanded_text.find("투자금·주식 평가") >= 0 and expanded_text.find("팝업 생성 배율") >= 0
 	game.hud._toggle_debug()
-	var collapsed_ok = not game.hud.ui.debugBody.visible and game.hud.ui.debugToggleButton.text == "+" and is_equal_approx(game.hud.ui.debugPanel.offset_left, -144.0) and is_equal_approx(game.hud.ui.debugPanel.offset_top, -54.0)
+	var collapsed_ok = not game.hud.ui.debugBody.visible and game.hud.ui.debugToggleButton.text == "+" and _control_rect_close(game.hud.ui.debugPanel, HtmlLayoutMetrics.debug_hud_rect(viewport, true), viewport)
 	game.hud._toggle_debug()
-	var expanded_ok = game.hud.ui.debugBody.visible and game.hud.ui.debugToggleButton.text == "-" and is_equal_approx(game.hud.ui.debugPanel.offset_left, -262.0) and is_equal_approx(game.hud.ui.debugPanel.offset_top, -420.0)
+	var expanded_ok = game.hud.ui.debugBody.visible and game.hud.ui.debugToggleButton.text == "-" and _control_rect_close(game.hud.ui.debugPanel, HtmlLayoutMetrics.debug_hud_rect(viewport), viewport)
+	debug_panel_layout_breakdown = {
+		"text_ok": text_ok,
+		"collapsed_ok": collapsed_ok,
+		"expanded_ok": expanded_ok,
+	}
 	return text_ok and collapsed_ok and expanded_ok
 
 func _verify_mobile_layout_controls() -> bool:
@@ -703,6 +735,8 @@ func _verify_mobile_layout_controls() -> bool:
 	game.hud._apply_mobile_layout(Vector2(640, 900))
 	var portrait_ok = game.hud.ui.mobileControls.visible and game.hud.ui.orientationPrompt.visible and game.hud.ui.mobileFullscreenButton.anchor_left == 0.5 and is_equal_approx(game.hud.ui.mobileFullscreenButton.offset_top, 8.0) and game.hud.ui.mobileEmergencyButton.disabled and game.hud.ui.mobileEmergencyButton.text.find("대기") >= 0
 	var inactive_joystick_ok = game.hud.ui.mobileJoystick.visible and game.hud.ui.mobileJoystick.modulate.a < 0.05 and is_equal_approx(game.hud.ui.mobileJoystick.custom_minimum_size.x, 92.0)
+	game.hud._apply_mobile_layout(Vector2(1080, 2340))
+	var hi_dpi_portrait_ok = game.hud.ui.mobileControls.visible and game.hud.ui.orientationPrompt.visible and is_equal_approx(game.hud.ui.mobileJoystick.custom_minimum_size.x, 92.0)
 
 	game.hud._start_floating_joystick(7, Vector2(24, 800), Vector2(640, 900))
 	var active_rect = Rect2(Vector2(game.hud.ui.mobileJoystick.offset_left, game.hud.ui.mobileJoystick.offset_top), Vector2(game.hud.ui.mobileJoystick.offset_right - game.hud.ui.mobileJoystick.offset_left, game.hud.ui.mobileJoystick.offset_bottom - game.hud.ui.mobileJoystick.offset_top))
@@ -716,16 +750,20 @@ func _verify_mobile_layout_controls() -> bool:
 	game.hud._update_mobile_button_state(game.state)
 	game.hud._apply_mobile_layout(Vector2(820, 480))
 	var landscape_ok = game.hud.ui.mobileControls.visible and not game.hud.ui.orientationPrompt.visible and is_equal_approx(game.hud.ui.mobileJoystick.custom_minimum_size.x, 86.0) and game.hud.ui.mobileEmergencyButton.text == "긴급 닫기"
+	game.hud._apply_mobile_layout(Vector2(2340, 1080))
+	var hi_dpi_landscape_ok = game.hud.ui.mobileControls.visible and not game.hud.ui.orientationPrompt.visible and is_equal_approx(game.hud.ui.mobileJoystick.custom_minimum_size.x, 86.0)
 	game.hud._apply_mobile_layout(Vector2(1100, 700))
 	var hidden_ok = not game.hud.ui.mobileControls.visible
 
 	mobile_layout_breakdown = {
 		"portrait_ok": portrait_ok,
 		"inactive_joystick_ok": inactive_joystick_ok,
+		"hi_dpi_portrait_ok": hi_dpi_portrait_ok,
 		"start_ok": start_ok,
 		"drag_ok": drag_ok,
 		"finish_ok": finish_ok,
 		"landscape_ok": landscape_ok,
+		"hi_dpi_landscape_ok": hi_dpi_landscape_ok,
 		"hidden_ok": hidden_ok,
 	}
 
@@ -736,7 +774,7 @@ func _verify_mobile_layout_controls() -> bool:
 	game.state.selectingModule = saved_selecting_module
 	game.state.gameOver = saved_game_over
 	game.hud.update_from_state(game.state)
-	return portrait_ok and inactive_joystick_ok and start_ok and drag_ok and finish_ok and landscape_ok and hidden_ok
+	return portrait_ok and inactive_joystick_ok and hi_dpi_portrait_ok and start_ok and drag_ok and finish_ok and landscape_ok and hi_dpi_landscape_ok and hidden_ok
 
 func _verify_popup_status_badges() -> bool:
 	var target = game.create_popup(game.popup_def_by_id("timed_reward"))
@@ -1054,6 +1092,10 @@ func _find_node_named(node: Node, node_name: String):
 		if found != null:
 			return found
 	return null
+
+func _control_rect_close(control: Control, expected: Rect2, viewport_size: Vector2) -> bool:
+	var actual = control.get_global_rect()
+	return abs(actual.position.x - expected.position.x) <= 0.51 and abs(actual.position.y - expected.position.y) <= 0.51 and abs(actual.size.x - expected.size.x) <= 0.51 and abs(actual.size.y - expected.size.y) <= 0.51
 
 func _color_close(a: Color, b: Color) -> bool:
 	return abs(a.r - b.r) < 0.01 and abs(a.g - b.g) < 0.01 and abs(a.b - b.b) < 0.01 and abs(a.a - b.a) < 0.01

@@ -1,13 +1,21 @@
 extends CanvasLayer
 class_name PrototypeHud
 
+const ChoiceOverlayScene = preload("res://scenes/ui/modal/ChoiceOverlay.tscn")
+const ChoiceCardScene = preload("res://scenes/ui/cards/ChoiceCard.tscn")
+const HtmlLayoutMetrics = preload("res://scripts/ui/html_layout_metrics.gd")
+
 var game = null
 var ui = {}
 var status_minimized := false
 var mobile_layout_visible := false
+var layout_signal_connected := false
+var choice_layout_scale := 1.0
+var choice_requested_columns := 3
 
 func setup(game_root) -> void:
 	game = game_root
+	layer = 10
 	_build()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -31,17 +39,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		_update_floating_joystick(event.position)
 
 func _build() -> void:
-	var root = Control.new()
-	root.name = "HudRoot"
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(root)
+	var root = get_node_or_null("HudRoot")
+	if root == null:
+		root = Control.new()
+		root.name = "HudRoot"
+		root.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(root)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.root = root
 
-	ui.difficultyHud = _panel("difficultyHud", Vector2(-170, 10), Vector2(340, 68), 0.82, 8)
+	ui.difficultyHud = _panel("difficultyHud", Vector2(-170, 10), Vector2(340, 68), 0.82, 3)
 	ui.difficultyHud.anchor_left = 0.5
 	ui.difficultyHud.anchor_right = 0.5
 	root.add_child(ui.difficultyHud)
-	var difficulty_box = _vbox(ui.difficultyHud, 6)
+	var difficulty_box = _vbox(ui.difficultyHud, 4)
 	var difficulty_row = HBoxContainer.new()
 	difficulty_box.add_child(difficulty_row)
 	ui.difficultyStage = _label("현재 난이도: 정상 작동", 12, Color("#edf2f7"), true)
@@ -54,11 +65,11 @@ func _build() -> void:
 	ui.difficultyEffect = _label("선택 난이도 +0 / 팝업 압박 +0%", 10, Color("#9aa8ba"), true)
 	difficulty_box.add_child(ui.difficultyEffect)
 
-	ui.cleanupHud = _panel("cleanupComboHud", Vector2(-130, 64), Vector2(260, 58), 0.82, 7)
+	ui.cleanupHud = _panel("cleanupComboHud", Vector2(-130, 64), Vector2(260, 58), 0.82, 3)
 	ui.cleanupHud.anchor_left = 0.5
 	ui.cleanupHud.anchor_right = 0.5
 	root.add_child(ui.cleanupHud)
-	var combo_box = _vbox(ui.cleanupHud, 5)
+	var combo_box = _vbox(ui.cleanupHud, 3)
 	ui.cleanupCount = _label("정리 콤보 x0", 12, Color("#edf2f7"), true)
 	combo_box.add_child(ui.cleanupCount)
 	ui.cleanupBar = _bar(Color("#5bd5ff"), 6)
@@ -66,27 +77,31 @@ func _build() -> void:
 	ui.cleanupMeta = _label("대기 중", 10, Color("#9aa8ba"), true)
 	combo_box.add_child(ui.cleanupMeta)
 
-	ui.combatHud = _panel("combatHud", Vector2(12, 12), Vector2(270, 274), 0.92, 12)
+	ui.combatHud = _panel("combatHud", Vector2(12, 12), Vector2(270, 274), 0.92, 4)
 	root.add_child(ui.combatHud)
-	var combat_box = _vbox(ui.combatHud, 7)
+	var combat_box = _vbox(ui.combatHud, 4)
 	combat_box.add_child(_title("전투 HUD"))
-	var hp_card = _hud_card(combat_box)
+	var hp_card = _hud_card(combat_box, 36.0)
 	var hp_header = _hud_card_header(hp_card, "HP")
 	ui.hpText = _label("100 / 100", 12, Color("#edf2f7"), true)
+	ui.hpText.custom_minimum_size = Vector2(72, 17)
 	hp_header.add_child(ui.hpText)
 	ui.healthBar = _bar(Color("#ff5964"), 10)
 	hp_card.add_child(ui.healthBar)
-	var xp_card = _hud_card(combat_box)
+	var xp_card = _hud_card(combat_box, 36.0)
 	var xp_header = _hud_card_header(xp_card, "Lv.")
 	ui.levelText = _label("1", 12, Color("#edf2f7"), true)
+	ui.levelText.custom_minimum_size = Vector2(20, 17)
 	xp_header.get_child(0).add_child(ui.levelText)
 	ui.xpText = _label("0 / 40", 12, Color("#edf2f7"), true)
+	ui.xpText.custom_minimum_size = Vector2(58, 17)
 	xp_header.add_child(ui.xpText)
 	ui.xpBar = _bar(Color("#4aa8ff"), 10)
 	xp_card.add_child(ui.xpBar)
 	var modules = GridContainer.new()
-	modules.columns = 2
+	modules.columns = 1
 	modules.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	modules.add_theme_constant_override("v_separation", 4)
 	combat_box.add_child(modules)
 	ui.primaryModule = _module_card("1차 모듈", "미선택", "기본형")
 	modules.add_child(ui.primaryModule)
@@ -94,24 +109,26 @@ func _build() -> void:
 	modules.add_child(ui.secondaryModule)
 	ui.moduleMeta = GridContainer.new()
 	ui.moduleMeta.columns = 2
-	ui.moduleMeta.add_theme_constant_override("h_separation", 8)
-	ui.moduleMeta.add_theme_constant_override("v_separation", 5)
+	ui.moduleMeta.add_theme_constant_override("h_separation", 4)
+	ui.moduleMeta.add_theme_constant_override("v_separation", 2)
 	combat_box.add_child(ui.moduleMeta)
 	ui.primaryMasteryText = _module_meta_cell(ui.moduleMeta, "1차 숙련", "0")
 	ui.secondaryMasteryText = _module_meta_cell(ui.moduleMeta, "보조 숙련", "0")
 	ui.nextChoiceText = _module_meta_cell(ui.moduleMeta, "다음 선택", "시작 선택", true)
 	ui.popupCountText = _module_meta_cell(ui.moduleMeta, "팝업", "0 / 5", true)
 
-	ui.economyHud = _panel("economyHud", Vector2(-267, 12), Vector2(255, 570), 0.92, 12)
+	ui.economyHud = _panel("economyHud", Vector2(-267, 12), Vector2(255, 570), 0.92, 4)
 	ui.economyHud.anchor_left = 1.0
 	ui.economyHud.anchor_right = 1.0
 	root.add_child(ui.economyHud)
-	var economy_box = _vbox(ui.economyHud, 7)
+	var economy_box = _vbox(ui.economyHud, 4)
 	var gold_card = PanelContainer.new()
-	gold_card.add_theme_stylebox_override("panel", _style_box(Color(0.27, 0.20, 0.05, 0.88), Color(0.95, 0.78, 0.29, 0.42), 8, 1, 9))
+	gold_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	gold_card.add_theme_stylebox_override("panel", _style_box(Color(0.27, 0.20, 0.05, 0.88), Color(0.95, 0.78, 0.29, 0.42), 8, 1, 3))
 	economy_box.add_child(gold_card)
 	var gold_row = HBoxContainer.new()
-	gold_row.add_theme_constant_override("separation", 10)
+	gold_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	gold_row.add_theme_constant_override("separation", 6)
 	gold_card.add_child(gold_row)
 	gold_row.add_child(_label("골드", 11, Color("#f6d477"), true))
 	var gold_spacer = Control.new()
@@ -130,6 +147,7 @@ func _build() -> void:
 	ui.rollItemButton.pressed.connect(func(): game.roll_item())
 	item_machine.add_child(ui.rollItemButton)
 	var badge_row = HBoxContainer.new()
+	badge_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	item_machine.add_child(badge_row)
 	ui.discountText = _badge("할인 0%")
 	badge_row.add_child(ui.discountText)
@@ -140,38 +158,44 @@ func _build() -> void:
 	_style_button(ui.openInventoryButton, "blue")
 	ui.openInventoryButton.pressed.connect(func(): game.open_inventory_overview())
 	economy_box.add_child(ui.openInventoryButton)
-	ui.lastItem = _rich("최근 아이템: 없음", 58)
+	ui.lastItem = _rich("최근 아이템: 없음", 42)
 	economy_box.add_child(ui.lastItem)
 	_build_resident_program_hud(economy_box)
 	economy_box.add_child(_title("아이템 목록"))
-	ui.itemInventory = _rich("보유 아이템 없음", 122)
+	ui.itemInventory = _rich("보유 아이템 없음", 90)
 	economy_box.add_child(ui.itemInventory)
 	economy_box.add_child(_title("최근 성장"))
-	ui.recentPerk = _rich("아직 없음", 76)
+	ui.recentPerk = _rich("아직 없음", 50)
 	economy_box.add_child(ui.recentPerk)
 
-	ui.statusPanel = _panel("statusPanel", Vector2(12, -148), Vector2(270, 136), 0.92, 12)
+	ui.statusPanel = _panel("statusPanel", Vector2(12, -148), Vector2(270, 136), 0.92, 4)
 	ui.statusPanel.anchor_top = 1.0
 	ui.statusPanel.anchor_bottom = 1.0
 	root.add_child(ui.statusPanel)
-	var status_box = _vbox(ui.statusPanel, 6)
+	var status_box = _vbox(ui.statusPanel, 4)
 	var status_header = HBoxContainer.new()
+	status_header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	status_header.custom_minimum_size = Vector2(0, 20)
 	status_box.add_child(status_header)
-	status_header.add_child(_title("조작/상태"))
+	ui.statusTitle = _title("조작/상태")
+	ui.statusTitle.custom_minimum_size = Vector2(72, 18)
+	status_header.add_child(ui.statusTitle)
 	var status_spacer = Control.new()
 	status_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	status_header.add_child(status_spacer)
 	ui.statusToggleButton = Button.new()
 	ui.statusToggleButton.text = "-"
-	ui.statusToggleButton.custom_minimum_size = Vector2(30, 26)
+	ui.statusToggleButton.custom_minimum_size = Vector2(26, 22)
 	ui.statusToggleButton.tooltip_text = "조작 패널 접기"
 	_style_button(ui.statusToggleButton, "toggle")
 	ui.statusToggleButton.pressed.connect(func(): _toggle_status())
 	status_header.add_child(ui.statusToggleButton)
 	ui.statusBody = VBoxContainer.new()
-	ui.statusBody.add_theme_constant_override("separation", 6)
+	ui.statusBody.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.statusBody.add_theme_constant_override("separation", 4)
 	status_box.add_child(ui.statusBody)
 	var speed_row = HBoxContainer.new()
+	speed_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	speed_row.add_child(_label("배속", 11, Color("#9aa8ba"), true))
 	var speed_spacer = Control.new()
 	speed_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -187,34 +211,56 @@ func _build() -> void:
 	ui.runStats = _rich("WASD/모바일 조이스틱 이동, Space 긴급 닫기, P 일시정지.", 72)
 	ui.statusBody.add_child(ui.runStats)
 
+	var debug_parent = _debug_parent(root)
 	ui.debugPanel = _panel("debugPanel", Vector2(-262, -420), Vector2(250, 408), 0.92, 12)
 	ui.debugPanel.anchor_left = 1.0
 	ui.debugPanel.anchor_right = 1.0
 	ui.debugPanel.anchor_top = 1.0
 	ui.debugPanel.anchor_bottom = 1.0
-	root.add_child(ui.debugPanel)
+	debug_parent.add_child(ui.debugPanel)
 	var debug_box = _vbox(ui.debugPanel, 6)
 	var debug_header = HBoxContainer.new()
+	debug_header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	debug_header.custom_minimum_size = Vector2(0, 20)
 	debug_box.add_child(debug_header)
-	debug_header.add_child(_title("디버그"))
+	ui.debugTitle = _title("디버그")
+	ui.debugTitle.custom_minimum_size = Vector2(52, 18)
+	debug_header.add_child(ui.debugTitle)
 	var debug_spacer = Control.new()
 	debug_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	debug_header.add_child(debug_spacer)
 	ui.debugToggleButton = Button.new()
 	ui.debugToggleButton.text = "-"
-	ui.debugToggleButton.custom_minimum_size = Vector2(30, 26)
+	ui.debugToggleButton.custom_minimum_size = Vector2(26, 22)
 	_style_button(ui.debugToggleButton, "toggle")
 	ui.debugToggleButton.pressed.connect(func(): _toggle_debug())
 	debug_header.add_child(ui.debugToggleButton)
-	ui.debugBody = VBoxContainer.new()
-	ui.debugBody.add_theme_constant_override("separation", 6)
+	ui.debugBody = ScrollContainer.new()
+	ui.debugBody.name = "debugBody"
+	ui.debugBody.mouse_filter = Control.MOUSE_FILTER_PASS
+	ui.debugBody.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ui.debugBody.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	ui.debugBody.custom_minimum_size = Vector2.ZERO
 	debug_box.add_child(ui.debugBody)
+	ui.debugBodyInset = MarginContainer.new()
+	ui.debugBodyInset.name = "debugBodyInset"
+	ui.debugBodyInset.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.debugBodyInset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ui.debugBodyInset.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	ui.debugBody.add_child(ui.debugBodyInset)
+	ui.debugBodyContent = VBoxContainer.new()
+	ui.debugBodyContent.name = "debugBodyContent"
+	ui.debugBodyContent.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.debugBodyContent.add_theme_constant_override("separation", 4)
+	ui.debugBodyContent.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ui.debugBodyInset.add_child(ui.debugBodyContent)
 	ui.debugStats = _rich("", 78)
-	ui.debugBody.add_child(ui.debugStats)
+	ui.debugBodyContent.add_child(ui.debugStats)
 	ui.debugScroll = ScrollContainer.new()
-	ui.debugScroll.custom_minimum_size = Vector2(0, 260)
-	ui.debugBody.add_child(ui.debugScroll)
+	ui.debugScroll.custom_minimum_size = Vector2(0, 220)
+	ui.debugBodyContent.add_child(ui.debugScroll)
 	ui.debugButtons = GridContainer.new()
+	ui.debugButtons.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.debugButtons.columns = 2
 	ui.debugScroll.add_child(ui.debugButtons)
 	_add_debug_buttons()
@@ -223,7 +269,7 @@ func _build() -> void:
 	ui.popupTelegraphLayer.name = "popupTelegraphLayer"
 	ui.popupTelegraphLayer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	ui.popupTelegraphLayer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(ui.popupTelegraphLayer)
+	_popup_telegraph_parent(root).add_child(ui.popupTelegraphLayer)
 
 	ui.trashZone = _panel("trashZone", Vector2(-80, -72), Vector2(160, 58), 0.78, 0, true)
 	ui.trashZone.anchor_left = 0.5
@@ -231,15 +277,50 @@ func _build() -> void:
 	ui.trashZone.anchor_top = 1.0
 	ui.trashZone.anchor_bottom = 1.0
 	ui.trashZone.visible = false
-	root.add_child(ui.trashZone)
+	ui.trashZone.z_index = 200
+	_popup_overlay_parent(root).add_child(ui.trashZone)
 	var trash_box = _vbox(ui.trashZone, 0)
 	var trash_label = _label("여기로 버리기", 12, Color("#edf2f7"), true)
 	trash_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	trash_box.add_child(trash_label)
 
 	_build_mobile_controls(root)
-	_build_choice_overlay(root)
-	_build_game_over(root)
+	var modal_parent = _modal_parent(root)
+	_build_choice_overlay(modal_parent)
+	_build_game_over(modal_parent)
+	_connect_layout_signal()
+	_apply_html_layout(HtmlLayoutMetrics.viewport_size(get_viewport()))
+
+func _connect_layout_signal() -> void:
+	if layout_signal_connected or get_viewport() == null:
+		return
+	get_viewport().size_changed.connect(Callable(self, "_on_viewport_size_changed"))
+	layout_signal_connected = true
+
+func _on_viewport_size_changed() -> void:
+	var viewport_size = HtmlLayoutMetrics.viewport_size(get_viewport())
+	_apply_html_layout(viewport_size)
+	_apply_mobile_layout(viewport_size)
+
+func _modal_parent(fallback: Control) -> Control:
+	if game != null and game.modal_layer != null and game.modal_layer.has_method("choice_parent"):
+		return game.modal_layer.choice_parent()
+	return fallback
+
+func _debug_parent(fallback: Control) -> Control:
+	if game != null and game.debug_layer != null and game.debug_layer.has_method("debug_parent"):
+		return game.debug_layer.debug_parent()
+	return fallback
+
+func _popup_telegraph_parent(fallback: Control) -> Control:
+	if game != null and game.popup_layer != null and game.popup_layer.has_method("telegraph_parent"):
+		return game.popup_layer.telegraph_parent()
+	return fallback
+
+func _popup_overlay_parent(fallback: Control) -> Control:
+	if game != null and game.popup_layer != null and game.popup_layer.has_method("overlay_parent"):
+		return game.popup_layer.overlay_parent()
+	return fallback
 
 func _build_mobile_controls(root: Control) -> void:
 	ui.mobileControls = Control.new()
@@ -271,6 +352,7 @@ func _build_mobile_controls(root: Control) -> void:
 	prompt_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	prompt_box.add_child(prompt_title)
 	var prompt_body = _label("휴대폰을 가로로 돌리거나 전체화면 버튼을 눌러 주세요.", 12, Color("#edf2f7"), false)
+	_make_body_label(prompt_body)
 	prompt_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	prompt_box.add_child(prompt_body)
 	ui.mobileJoystick = _panel("mobileJoystick", Vector2(0, 0), Vector2(86, 86), 0.58, 0)
@@ -300,34 +382,34 @@ func _build_mobile_controls(root: Control) -> void:
 	_apply_mobile_layout(get_viewport().get_visible_rect().size)
 
 func _build_choice_overlay(root: Control) -> void:
-	ui.choiceOverlay = ColorRect.new()
+	ui.choiceOverlay = ChoiceOverlayScene.instantiate() as ColorRect
 	ui.choiceOverlay.name = "itemOverlay"
-	ui.choiceOverlay.color = Color(0, 0, 0, 0.72)
-	ui.choiceOverlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	ui.choiceOverlay.visible = false
+	ui.choiceOverlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(ui.choiceOverlay)
-	var panel = _panel("itemPanel", Vector2(-340, -250), Vector2(680, 500), 0.98, 18)
-	panel.anchor_left = 0.5
-	panel.anchor_right = 0.5
-	panel.anchor_top = 0.5
-	panel.anchor_bottom = 0.5
-	ui.choiceOverlay.add_child(panel)
-	var box = _vbox(panel, 10)
-	ui.choiceTitle = _title("아이템 선택")
+	var panel = ui.choiceOverlay.get_node("itemPanel") as Panel
+	ui.choicePanel = panel
+	panel.clip_contents = true
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.add_theme_stylebox_override("panel", _style_box(Color(0.07, 0.10, 0.15, 0.98), Color(1, 1, 1, 0.16), 8, 1, 18))
+	ui.choiceBox = ui.choiceOverlay.get_node("itemPanel/ChoiceBox") as VBoxContainer
+	ui.choiceTitle = ui.choiceOverlay.get_node("itemPanel/ChoiceBox/choiceTitle") as Label
 	ui.choiceTitle.add_theme_font_size_override("font_size", 24)
-	box.add_child(ui.choiceTitle)
-	ui.choiceDescription = _rich("", 58)
+	ui.choiceTitle.add_theme_color_override("font_color", Color("#edf2f7"))
+	_make_single_line(ui.choiceTitle)
+	ui.choiceDescription = ui.choiceOverlay.get_node("itemPanel/ChoiceBox/choiceDescription") as RichTextLabel
+	ui.choiceDescription.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	ui.choiceDescription.clip_contents = true
+	ui.choiceDescription.fit_content = false
 	ui.choiceDescription.add_theme_stylebox_override("normal", _style_box(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 0, 0, 0))
 	ui.choiceDescription.add_theme_color_override("default_color", Color("#9aa8ba"))
-	box.add_child(ui.choiceDescription)
-	var scroll = ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	box.add_child(scroll)
-	ui.choiceGrid = GridContainer.new()
-	ui.choiceGrid.columns = 3
-	ui.choiceGrid.add_theme_constant_override("h_separation", 12)
-	ui.choiceGrid.add_theme_constant_override("v_separation", 12)
-	scroll.add_child(ui.choiceGrid)
+	ui.choiceDescription.add_theme_font_size_override("normal_font_size", 11)
+	ui.choiceScroll = ui.choiceOverlay.get_node("itemPanel/ChoiceBox/ChoiceScroll") as ScrollContainer
+	ui.choiceScroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ui.choiceScroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	ui.choiceScroll.custom_minimum_size = Vector2.ZERO
+	ui.choiceGrid = ui.choiceOverlay.get_node("itemPanel/ChoiceBox/ChoiceScroll/choiceGrid") as GridContainer
+	_ensure_choice_scroll_inset()
+	ui.choiceGrid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 func _build_game_over(root: Control) -> void:
 	ui.gameOverOverlay = ColorRect.new()
@@ -335,12 +417,14 @@ func _build_game_over(root: Control) -> void:
 	ui.gameOverOverlay.color = Color(0, 0, 0, 0.72)
 	ui.gameOverOverlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	ui.gameOverOverlay.visible = false
+	ui.gameOverOverlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(ui.gameOverOverlay)
 	var panel = _panel("gameOverPanel", Vector2(-230, -120), Vector2(460, 240), 0.96)
 	panel.anchor_left = 0.5
 	panel.anchor_right = 0.5
 	panel.anchor_top = 0.5
 	panel.anchor_bottom = 0.5
+	ui.gameOverPanel = panel
 	ui.gameOverOverlay.add_child(panel)
 	var box = _vbox(panel, 12)
 	var title = _title("게임 오버")
@@ -354,9 +438,170 @@ func _build_game_over(root: Control) -> void:
 	restart.pressed.connect(func(): game.reset_game())
 	box.add_child(restart)
 
+func _ensure_choice_scroll_inset() -> void:
+	if not ui.has("choiceScroll") or not ui.has("choiceGrid"):
+		return
+	var existing = ui.choiceScroll.get_node_or_null("ChoiceScrollInset")
+	if existing is MarginContainer:
+		ui.choiceScrollInset = existing
+		return
+	var previous_parent = ui.choiceGrid.get_parent()
+	if previous_parent != null:
+		previous_parent.remove_child(ui.choiceGrid)
+	var inset = MarginContainer.new()
+	inset.name = "ChoiceScrollInset"
+	inset.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	inset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inset.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	ui.choiceScroll.add_child(inset)
+	inset.add_child(ui.choiceGrid)
+	ui.choiceScrollInset = inset
+
+func _apply_html_layout(viewport_size: Vector2) -> void:
+	if ui.is_empty():
+		return
+	HtmlLayoutMetrics.apply_desktop_hud_layout(ui, viewport_size, status_minimized, _debug_minimized())
+	_apply_fixed_panel_constraints(viewport_size)
+	_apply_responsive_text(viewport_size)
+	if ui.has("choiceOverlay"):
+		HtmlLayoutMetrics.apply_choice_overlay_layout(ui.choiceOverlay, ui.choicePanel, ui.choiceScroll, ui.choiceGrid, viewport_size, choice_layout_scale, choice_requested_columns)
+		_apply_choice_box_padding(viewport_size)
+		_apply_choice_card_widths(viewport_size)
+	if ui.has("gameOverPanel"):
+		var size = HtmlLayoutMetrics.game_over_panel_size(viewport_size)
+		ui.gameOverPanel.anchor_left = 0.5
+		ui.gameOverPanel.anchor_top = 0.5
+		ui.gameOverPanel.anchor_right = 0.5
+		ui.gameOverPanel.anchor_bottom = 0.5
+		ui.gameOverPanel.offset_left = -size.x * 0.5
+		ui.gameOverPanel.offset_top = -size.y * 0.5
+		ui.gameOverPanel.offset_right = size.x * 0.5
+		ui.gameOverPanel.offset_bottom = size.y * 0.5
+		ui.gameOverPanel.custom_minimum_size = size
+
+func _apply_responsive_text(viewport_size: Vector2) -> void:
+	var scale = HtmlLayoutMetrics.text_scale(viewport_size)
+	var compact = HtmlLayoutMetrics.is_compact_viewport(viewport_size)
+	_set_label_font(ui.get("difficultyStage", null), _scaled_font(12, scale, 9))
+	_set_label_font(ui.get("difficultyScore", null), _scaled_font(12, scale, 9))
+	_set_label_font(ui.get("difficultyEffect", null), _scaled_font(10, scale, 8))
+	_set_label_font(ui.get("cleanupCount", null), _scaled_font(16, scale, 11))
+	_set_label_font(ui.get("cleanupMeta", null), _scaled_font(10, scale, 8))
+	_set_label_font(ui.get("goldText", null), _scaled_font(22, scale, 16))
+	_set_rich_font(ui.get("lastItem", null), _scaled_font(11, scale, 9))
+	_set_rich_font(ui.get("itemInventory", null), _scaled_font(11, scale, 9))
+	_set_rich_font(ui.get("recentPerk", null), _scaled_font(11, scale, 9))
+	_set_rich_font(ui.get("runStats", null), _scaled_font(11, scale, 9))
+	_set_rich_font(ui.get("debugStats", null), _scaled_font(11, scale, 9))
+	if ui.has("choiceTitle"):
+		_set_label_font(ui.choiceTitle, _scaled_font(24, scale, 15))
+	if ui.has("choiceDescription"):
+		_set_rich_font(ui.choiceDescription, _scaled_font(11, scale, 9))
+		ui.choiceDescription.custom_minimum_size = Vector2(0, 28 if compact else 24)
+	if ui.has("debugPanel"):
+		ui.debugPanel.visible = HtmlLayoutMetrics.debug_visible_for_viewport(viewport_size)
+		ui.debugPanel.mouse_filter = Control.MOUSE_FILTER_STOP if ui.debugPanel.visible else Control.MOUSE_FILTER_IGNORE
+
+func _apply_fixed_panel_constraints(viewport_size: Vector2) -> void:
+	for key in ["combatHud", "economyHud", "statusPanel", "debugPanel"]:
+		var panel = ui.get(key, null)
+		if not panel is Control:
+			continue
+		var rule = HtmlLayoutMetrics.fixed_panel_rule(key, viewport_size, status_minimized, _debug_minimized())
+		var rect = rule.get("rect", Rect2(Vector2.ZERO, Vector2.ZERO))
+		panel.clip_contents = true
+		panel.custom_minimum_size = Vector2.ZERO
+		panel.size = rect.size
+		panel.mouse_filter = int(rule.get("mouse_filter", panel.mouse_filter))
+		_set_panel_box(panel, int(rule.get("padding", 0)), int(rule.get("radius", 8)))
+		var content_inset = max(1, int(rule.get("padding", 0)))
+		var clip = panel.get_node_or_null("%sClip" % panel.name)
+		if clip is Control:
+			clip.set_anchors_preset(Control.PRESET_FULL_RECT)
+			clip.offset_left = content_inset
+			clip.offset_top = content_inset
+			clip.offset_right = -content_inset
+			clip.offset_bottom = -content_inset
+			clip.custom_minimum_size = Vector2.ZERO
+			clip.clip_contents = true
+		var scroll = panel.get_node_or_null("%sClip/%sBodyScroll" % [panel.name, panel.name])
+		if scroll is Control:
+			scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+			scroll.offset_left = 0.0
+			scroll.offset_top = 0.0
+			scroll.offset_right = 0.0
+			scroll.offset_bottom = 0.0
+			scroll.custom_minimum_size = Vector2.ZERO
+			var inset = scroll.get_node_or_null("%sBodyInset" % panel.name)
+			if inset is MarginContainer:
+				_apply_scroll_inset(inset, viewport_size)
+	if ui.has("debugBody") and ui.debugBody is Control:
+		ui.debugBody.custom_minimum_size = Vector2(0, HtmlLayoutMetrics.debug_body_max_height(viewport_size))
+	if ui.has("debugScroll") and ui.debugScroll is Control:
+		ui.debugScroll.custom_minimum_size = Vector2(0, HtmlLayoutMetrics.debug_buttons_max_height(viewport_size))
+
+func _apply_choice_box_padding(viewport_size: Vector2) -> void:
+	if not ui.has("choiceBox") or not ui.choiceBox is Control:
+		return
+	var padding = HtmlLayoutMetrics.choice_panel_padding(viewport_size)
+	var top_padding = HtmlLayoutMetrics.choice_panel_top_padding(viewport_size)
+	ui.choiceBox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ui.choiceBox.offset_left = padding
+	ui.choiceBox.offset_top = top_padding
+	ui.choiceBox.offset_right = -padding
+	ui.choiceBox.offset_bottom = -padding
+	ui.choiceBox.custom_minimum_size = Vector2.ZERO
+	ui.choiceBox.add_theme_constant_override("separation", 5 if HtmlLayoutMetrics.is_compact_viewport(viewport_size) else 7)
+	_apply_choice_title_safe_layout(viewport_size)
+	_set_panel_box(ui.choicePanel, 0, 10)
+	if ui.has("choiceScrollInset") and ui.choiceScrollInset is MarginContainer:
+		_apply_scroll_inset(ui.choiceScrollInset, viewport_size)
+	if ui.has("debugBodyInset") and ui.debugBodyInset is MarginContainer:
+		_apply_scroll_inset(ui.debugBodyInset, viewport_size)
+
+func _apply_choice_title_safe_layout(viewport_size: Vector2) -> void:
+	if not ui.has("choiceTitle") or not ui.choiceTitle is Label:
+		return
+	var scale = HtmlLayoutMetrics.text_scale(viewport_size)
+	var font_size = _scaled_font(24, scale, 15)
+	ui.choiceTitle.add_theme_font_size_override("font_size", font_size)
+	ui.choiceTitle.custom_minimum_size = Vector2(0, _line_box_height(font_size) + 2.0)
+	_make_single_line(ui.choiceTitle)
+
+func _apply_scroll_inset(inset: MarginContainer, viewport_size: Vector2) -> void:
+	inset.add_theme_constant_override("margin_right", HtmlLayoutMetrics.scrollbar_safe_inset(viewport_size))
+	inset.add_theme_constant_override("margin_bottom", 1)
+
+func _set_panel_box(panel: Control, margin: int, radius: int) -> void:
+	var style = panel.get_theme_stylebox("panel")
+	if not style is StyleBoxFlat:
+		return
+	var updated = style.duplicate() as StyleBoxFlat
+	updated.set_content_margin_all(margin)
+	updated.corner_radius_top_left = radius
+	updated.corner_radius_top_right = radius
+	updated.corner_radius_bottom_left = radius
+	updated.corner_radius_bottom_right = radius
+	panel.add_theme_stylebox_override("panel", updated)
+
+func _scaled_font(base_size: int, scale: float, minimum: int) -> int:
+	return max(minimum, int(round(float(base_size) * scale)))
+
+func _set_label_font(node, size: int) -> void:
+	if node is Label:
+		node.add_theme_font_size_override("font_size", size)
+
+func _set_rich_font(node, size: int) -> void:
+	if node is RichTextLabel:
+		node.add_theme_font_size_override("normal_font_size", size)
+
+func _debug_minimized() -> bool:
+	return ui.has("debugBody") and not ui.debugBody.visible
+
 func _panel(name: String, pos: Vector2, size: Vector2, alpha: float, margin := 12, dashed := false) -> PanelContainer:
 	var panel = PanelContainer.new()
 	panel.name = name
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.offset_left = pos.x
 	panel.offset_top = pos.y
 	panel.offset_right = pos.x + size.x
@@ -375,11 +620,60 @@ func _panel(name: String, pos: Vector2, size: Vector2, alpha: float, margin := 1
 
 func _vbox(parent: Node, separation: int) -> VBoxContainer:
 	var box = VBoxContainer.new()
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_theme_constant_override("separation", separation)
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	parent.add_child(box)
+	if parent is PanelContainer and str(parent.name) == "debugPanel":
+		var clip = _panel_clip(parent)
+		box.set_anchors_preset(Control.PRESET_FULL_RECT)
+		box.offset_left = 0.0
+		box.offset_top = 0.0
+		box.offset_right = 0.0
+		box.offset_bottom = 0.0
+		clip.add_child(box)
+	elif _should_wrap_panel_content(parent):
+		var clip = Control.new()
+		clip.name = "%sClip" % parent.name
+		clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		clip.clip_contents = true
+		clip.custom_minimum_size = Vector2.ZERO
+		clip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		clip.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		parent.add_child(clip)
+		var scroll = ScrollContainer.new()
+		scroll.name = "%sBodyScroll" % parent.name
+		scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+		scroll.mouse_filter = Control.MOUSE_FILTER_PASS
+		scroll.clip_contents = true
+		scroll.custom_minimum_size = Vector2.ZERO
+		scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		clip.add_child(scroll)
+		var inset = MarginContainer.new()
+		inset.name = "%sBodyInset" % parent.name
+		inset.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		inset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		inset.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		scroll.add_child(inset)
+		inset.add_child(box)
+	else:
+		parent.add_child(box)
 	return box
+
+func _panel_clip(parent: Node) -> Control:
+	var clip = Control.new()
+	clip.name = "%sClip" % parent.name
+	clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	clip.clip_contents = true
+	clip.custom_minimum_size = Vector2.ZERO
+	clip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	clip.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	parent.add_child(clip)
+	return clip
+
+func _should_wrap_panel_content(parent: Node) -> bool:
+	return parent is PanelContainer and HtmlLayoutMetrics.fixed_panel_uses_scroll_wrapper(str(parent.name))
 
 func _title(text: String) -> Label:
 	return _label(text, 15, Color("#edf2f7"), true)
@@ -387,28 +681,48 @@ func _title(text: String) -> Label:
 func _label(text: String, size: int, color: Color, bold: bool) -> Label:
 	var label = Label.new()
 	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_make_single_line(label, false)
 	label.add_theme_font_size_override("font_size", size)
 	label.add_theme_color_override("font_color", color)
 	if bold:
 		label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.5))
 	return label
 
+func _make_single_line(label: Label, expand := true) -> Label:
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	label.clip_text = true
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	if expand:
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return label
+
+func _make_body_label(label: Label) -> Label:
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.clip_text = false
+	label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return label
+
 func _rich(text: String, height: float) -> RichTextLabel:
 	var label = RichTextLabel.new()
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.bbcode_enabled = true
 	label.text = text
+	label.clip_contents = true
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size = Vector2(0, height)
 	label.fit_content = false
 	label.scroll_active = true
 	label.add_theme_font_size_override("normal_font_size", 11)
 	label.add_theme_color_override("default_color", Color("#c8d5e7"))
-	var style = _style_box(Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.0), 6, 0, 8)
+	var style = _style_box(Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.0), 6, 0, 2)
 	label.add_theme_stylebox_override("normal", style)
 	return label
 
 func _bar(fill_color: Color = Color("#4aa8ff"), height := 10) -> ProgressBar:
 	var bar = ProgressBar.new()
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bar.min_value = 0
 	bar.max_value = 100
 	bar.value = 0
@@ -439,56 +753,72 @@ func _difficulty_color(stage_id: String) -> Color:
 
 func _badge(text: String) -> Label:
 	var badge = _label(text, 10, Color("#edf2f7"), true)
-	badge.custom_minimum_size = Vector2(86, 24)
+	badge.custom_minimum_size = Vector2(78, 21)
 	return badge
 
-func _hud_card(parent: Node) -> VBoxContainer:
+func _hud_card(parent: Node, min_height := 0.0) -> VBoxContainer:
 	var card = PanelContainer.new()
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.add_theme_stylebox_override("panel", _style_box(Color(1, 1, 1, 0.065), Color(1, 1, 1, 0.11), 7, 1, 8))
+	if min_height > 0.0:
+		card.custom_minimum_size = Vector2(0, min_height)
+	card.add_theme_stylebox_override("panel", _style_box(Color(1, 1, 1, 0.065), Color(1, 1, 1, 0.11), 7, 1, 2))
 	parent.add_child(card)
 	var box = VBoxContainer.new()
-	box.add_theme_constant_override("separation", 6)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_theme_constant_override("separation", 3)
 	card.add_child(box)
 	return box
 
 func _hud_card_header(parent: Node, title: String) -> HBoxContainer:
 	var row = HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 4)
+	row.custom_minimum_size = Vector2(0, 17)
 	parent.add_child(row)
 	var left = HBoxContainer.new()
+	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	left.add_theme_constant_override("separation", 3)
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left.custom_minimum_size = Vector2(0, 17)
 	row.add_child(left)
-	left.add_child(_label(title, 12, Color("#d8e3f3"), true))
+	var title_label = _label(title, 12, Color("#d8e3f3"), true)
+	title_label.custom_minimum_size = Vector2(28, 17)
+	left.add_child(title_label)
 	return row
 
 func _build_investor_dashboard(parent: Node) -> void:
 	ui.investorDashboard = PanelContainer.new()
-	ui.investorDashboard.add_theme_stylebox_override("panel", _style_box(Color(0.08, 0.12, 0.15, 0.9), Color(0.95, 0.78, 0.29, 0.28), 7, 1, 8))
+	ui.investorDashboard.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.investorDashboard.add_theme_stylebox_override("panel", _style_box(Color(0.08, 0.12, 0.15, 0.9), Color(0.95, 0.78, 0.29, 0.28), 7, 1, 2))
 	parent.add_child(ui.investorDashboard)
 	var box = VBoxContainer.new()
-	box.add_theme_constant_override("separation", 6)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_theme_constant_override("separation", 3)
 	ui.investorDashboard.add_child(box)
 	var header = _hud_card_header(box, "투자자 터미널")
 	ui.investorCreditMini = _label("신용 50", 11, Color("#ffe4a3"), true)
 	header.add_child(ui.investorCreditMini)
 	ui.investorDashboardBody = VBoxContainer.new()
-	ui.investorDashboardBody.add_theme_constant_override("separation", 4)
+	ui.investorDashboardBody.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.investorDashboardBody.add_theme_constant_override("separation", 3)
 	box.add_child(ui.investorDashboardBody)
 
 func _build_resident_program_hud(parent: Node) -> void:
 	ui.residentProgramHud = PanelContainer.new()
-	ui.residentProgramHud.add_theme_stylebox_override("panel", _style_box(Color(1, 1, 1, 0.065), Color(1, 1, 1, 0.11), 7, 1, 8))
+	ui.residentProgramHud.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.residentProgramHud.add_theme_stylebox_override("panel", _style_box(Color(1, 1, 1, 0.065), Color(1, 1, 1, 0.11), 7, 1, 2))
 	parent.add_child(ui.residentProgramHud)
 	var box = VBoxContainer.new()
-	box.add_theme_constant_override("separation", 6)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_theme_constant_override("separation", 3)
 	ui.residentProgramHud.add_child(box)
 	var header = _hud_card_header(box, "보안 프로그램")
 	ui.residentProgramCount = _label("0", 11, Color("#dceeff"), true)
 	header.add_child(ui.residentProgramCount)
 	ui.residentProgramList = VBoxContainer.new()
-	ui.residentProgramList.add_theme_constant_override("separation", 4)
+	ui.residentProgramList.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.residentProgramList.add_theme_constant_override("separation", 3)
 	box.add_child(ui.residentProgramList)
 
 func _clear_container(node: Node) -> void:
@@ -498,11 +828,13 @@ func _clear_container(node: Node) -> void:
 
 func _hud_line(parent: Node, left_text: String, right_text: String, accent := false) -> HBoxContainer:
 	var row = HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	row.custom_minimum_size = Vector2(0, 22)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 4)
+	row.custom_minimum_size = Vector2(0, 17)
 	var panel = PanelContainer.new()
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", _style_box(Color(1, 1, 1, 0.06), Color(1, 1, 1, 0.0), 5, 0, 5))
+	panel.add_theme_stylebox_override("panel", _style_box(Color(1, 1, 1, 0.06), Color(1, 1, 1, 0.0), 5, 0, 2))
 	parent.add_child(panel)
 	panel.add_child(row)
 	var left = _label(left_text, 11, Color("#9aa8ba"), true)
@@ -518,19 +850,22 @@ func _hud_summary(parent: Node, text: String) -> Label:
 
 func _module_card(title: String, value: String, detail: String) -> PanelContainer:
 	var panel = PanelContainer.new()
-	panel.custom_minimum_size = Vector2(134, 60)
-	panel.add_theme_stylebox_override("panel", _style_box(Color(0.08, 0.14, 0.20, 0.72), Color(0.52, 0.82, 1.0, 0.22), 7, 1, 7))
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.custom_minimum_size = Vector2(0, 46)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _style_box(Color(0.08, 0.14, 0.20, 0.72), Color(0.52, 0.82, 1.0, 0.22), 7, 1, 2))
 	var box = VBoxContainer.new()
-	box.add_theme_constant_override("separation", 2)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_theme_constant_override("separation", 1)
 	panel.add_child(box)
 	box.add_child(_label(title, 10, Color("#9aa8ba"), true))
-	box.add_child(_label(value, 12, Color("#edf2f7"), true))
-	box.add_child(_label(detail, 10, Color("#9aa8ba"), false))
+	box.add_child(_label(value, 14, Color("#edf2f7"), true))
+	box.add_child(_label(detail, 10, Color("#8fd4ff"), false))
 	return panel
 
 func _module_meta_cell(parent: Node, label_text: String, value_text: String, wide := false) -> Label:
 	var label = _label("%s %s" % [label_text, value_text], 11, Color("#9aa8ba"), true)
-	label.custom_minimum_size = Vector2(118 if not wide else 244, 22)
+	label.custom_minimum_size = Vector2(0, 17)
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(label)
 	return label
@@ -560,7 +895,7 @@ func _add_debug_buttons() -> void:
 	for action in actions:
 		var button = Button.new()
 		button.text = action[1]
-		button.custom_minimum_size = Vector2(100, 28)
+		button.custom_minimum_size = Vector2(92, 24)
 		_style_button(button, "compact")
 		button.pressed.connect(func(id = action[0]): game.debug_action(id))
 		ui.debugButtons.add_child(button)
@@ -568,16 +903,17 @@ func _add_debug_buttons() -> void:
 func _toggle_debug() -> void:
 	ui.debugBody.visible = not ui.debugBody.visible
 	ui.debugToggleButton.text = "-" if ui.debugBody.visible else "+"
+	ui.debugTitle.text = "디버그" if ui.debugBody.visible else "디버그"
 	ui.debugToggleButton.tooltip_text = "디버그 패널 접기" if ui.debugBody.visible else "디버그 패널 펼치기"
-	ui.debugPanel.offset_left = -262 if ui.debugBody.visible else -144
-	ui.debugPanel.offset_top = -420 if ui.debugBody.visible else -54
+	_apply_html_layout(HtmlLayoutMetrics.viewport_size(get_viewport()))
 
 func _toggle_status() -> void:
 	status_minimized = not status_minimized
 	ui.statusBody.visible = not status_minimized
 	ui.statusToggleButton.text = "+" if status_minimized else "-"
+	ui.statusTitle.text = "조작/상태"
 	ui.statusToggleButton.tooltip_text = "조작 패널 펼치기" if status_minimized else "조작 패널 접기"
-	ui.statusPanel.offset_top = -52 if status_minimized else -148
+	_apply_html_layout(HtmlLayoutMetrics.viewport_size(get_viewport()))
 
 func _update_investor_dashboard(state: Dictionary) -> void:
 	var active = state.activePlaystyle == "investor_starter"
@@ -667,39 +1003,48 @@ func update_from_state(state: Dictionary) -> void:
 	ui.runStats.text = game.run_stats_text()
 	ui.debugStats.text = game.debug_stats_text()
 	ui.gameOverOverlay.visible = state.gameOver
+	ui.gameOverOverlay.mouse_filter = Control.MOUSE_FILTER_STOP if state.gameOver else Control.MOUSE_FILTER_IGNORE
 	if state.gameOver:
 		ui.gameOverSummary.text = "생존 시간 %s, 도달 레벨 %d, 보유 골드 %dG.\nR을 눌러 재시작하세요." % [game.format_time(state.elapsed), state.level, state.gold]
 	ui.cleanupHud.visible = state.cleanupComboValue > 0
 	var viewport_size = get_viewport().get_visible_rect().size
 	_update_mobile_button_state(state)
+	_apply_html_layout(viewport_size)
 	_apply_mobile_layout(viewport_size)
 	_update_mobile_knob(state)
 	_update_telegraphs(state)
 	_update_trash_zone(state)
 
-func show_choices(title: String, description: String, choices: Array, callback: Callable, columns := 3) -> void:
+func show_choices(title: String, description: String, choices: Array, callback: Callable, _columns := 3, layout_scale := 1.0) -> void:
+	choice_layout_scale = layout_scale
+	choice_requested_columns = max(1, int(_columns))
 	ui.choiceTitle.text = title
 	ui.choiceDescription.text = description
-	ui.choiceGrid.columns = columns
 	_clear_choice_grid()
 	for choice in choices:
 		ui.choiceGrid.add_child(_choice_card_button(choice, false, false, callback))
+	_apply_html_layout(HtmlLayoutMetrics.viewport_size(get_viewport()))
+	ui.choiceOverlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	ui.choiceOverlay.visible = true
 
-func show_boss_package_choices(title: String, description: String, choices: Array, selected_ids: Array, callback: Callable, columns := 3) -> void:
+func show_boss_package_choices(title: String, description: String, choices: Array, selected_ids: Array, callback: Callable, _columns := 3) -> void:
+	choice_layout_scale = 1.0
+	choice_requested_columns = max(1, int(_columns))
 	ui.choiceTitle.text = title
 	ui.choiceDescription.text = "%s\n%d / 2 선택" % [description, selected_ids.size()]
-	ui.choiceGrid.columns = columns
 	_clear_choice_grid()
 	for choice in choices:
 		var selected = selected_ids.has(choice.get("id", ""))
 		ui.choiceGrid.add_child(_choice_card_button(choice, selected, not selected and selected_ids.size() >= 2, callback))
+	_apply_html_layout(HtmlLayoutMetrics.viewport_size(get_viewport()))
+	ui.choiceOverlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	ui.choiceOverlay.visible = true
 
 func show_inventory_overview(callback: Callable) -> void:
+	choice_layout_scale = 1.0
+	choice_requested_columns = 3
 	ui.choiceTitle.text = "보유 아이템"
 	ui.choiceDescription.text = "현재 보유 중인 아이템과 태그, 적용 중인 효과를 한눈에 확인합니다.\n\n%s" % game.resident_program_hud_text()
-	ui.choiceGrid.columns = 3
 	_clear_choice_grid()
 	var owned_count = 0
 	for item in game.data.ITEMS:
@@ -710,31 +1055,72 @@ func show_inventory_overview(callback: Callable) -> void:
 		ui.choiceGrid.add_child(_inventory_card(item, count))
 	if owned_count == 0:
 		var empty = _rich("아직 보유한 아이템이 없습니다.", 64)
-		empty.custom_minimum_size = Vector2(220, 64)
+		empty.custom_minimum_size = Vector2(220, 48)
 		ui.choiceGrid.add_child(empty)
 	var close = Button.new()
 	close.text = "닫기\n게임으로 돌아갑니다."
 	close.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	close.custom_minimum_size = Vector2(220, 54)
+	close.custom_minimum_size = Vector2(220, 44)
 	_style_button(close, "choice")
 	close.pressed.connect(callback)
 	ui.choiceGrid.add_child(close)
+	_apply_html_layout(HtmlLayoutMetrics.viewport_size(get_viewport()))
+	ui.choiceOverlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	ui.choiceOverlay.visible = true
 
 func hide_choices() -> void:
 	ui.choiceOverlay.visible = false
+	ui.choiceOverlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	choice_layout_scale = 1.0
+	choice_requested_columns = 3
 
 func _clear_choice_grid() -> void:
 	for child in ui.choiceGrid.get_children():
 		ui.choiceGrid.remove_child(child)
 		child.queue_free()
 
+func _apply_choice_card_widths(viewport_size := Vector2.ZERO) -> void:
+	if not ui.has("choiceGrid") or not ui.has("choicePanel"):
+		return
+	var resolved_viewport_size = viewport_size if viewport_size != Vector2.ZERO else HtmlLayoutMetrics.viewport_size(get_viewport())
+	var panel_size = HtmlLayoutMetrics.choice_panel_size(resolved_viewport_size, choice_layout_scale)
+	var columns = max(1, int(ui.choiceGrid.columns))
+	if choice_requested_columns > 0:
+		columns = min(columns, choice_requested_columns)
+		ui.choiceGrid.columns = columns
+	var width = HtmlLayoutMetrics.choice_card_width(panel_size.x, columns, resolved_viewport_size)
+	for child in ui.choiceGrid.get_children():
+		if child is Control:
+			var kind = str(child.get_meta("choiceKind", "generic"))
+			child.clip_contents = true
+			child.custom_minimum_size = Vector2(width, HtmlLayoutMetrics.choice_card_min_height(kind, resolved_viewport_size))
+			child.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			var content_padding = HtmlLayoutMetrics.choice_card_padding(kind, resolved_viewport_size)
+			var body = child.get_node_or_null("choiceCardBody")
+			if body is Control:
+				if body is VBoxContainer:
+					body.add_theme_constant_override("separation", int(HtmlLayoutMetrics.choice_inner_gap(resolved_viewport_size)))
+				body.offset_left = content_padding
+				body.offset_top = content_padding
+				body.offset_right = -content_padding
+				body.offset_bottom = -content_padding
+				body.custom_minimum_size = Vector2(max(1.0, width - content_padding * 2.0), 0)
+				body.clip_contents = true
+			_apply_choice_text_layout(child, resolved_viewport_size, width)
+			var height = max(HtmlLayoutMetrics.choice_card_min_height(kind, resolved_viewport_size), _choice_card_required_height(child, width, resolved_viewport_size))
+			child.custom_minimum_size = Vector2(width, height)
+
 func _choice_card_button(choice: Dictionary, selected: bool, disabled: bool, callback: Callable) -> Button:
-	var button = Button.new()
+	var button = ChoiceCardScene.instantiate() as Button
+	var kind = _choice_kind(choice)
 	button.name = "itemChoice" if choice.has("rarity") else "moduleChoice"
 	button.text = ""
 	button.tooltip_text = _choice_button_text(choice, selected)
 	button.custom_minimum_size = _choice_button_size(choice)
+	button.set_meta("choiceKind", kind)
+	button.set_meta("choiceSelected", selected)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.clip_contents = true
 	button.disabled = disabled
 	_style_button(button, _choice_button_variant(choice, selected))
 	button.pressed.connect(func(c = choice): callback.call(c))
@@ -745,7 +1131,10 @@ func _choice_card_button(choice: Dictionary, selected: bool, disabled: bool, cal
 	box.offset_top = 10
 	box.offset_right = -10
 	box.offset_bottom = -10
-	box.add_theme_constant_override("separation", 6)
+	box.add_theme_constant_override("separation", int(HtmlLayoutMetrics.choice_inner_gap(HtmlLayoutMetrics.viewport_size(get_viewport()))))
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.custom_minimum_size = Vector2(max(1.0, button.custom_minimum_size.x - 20.0), 0)
+	box.clip_contents = true
 	button.add_child(box)
 	if selected:
 		box.add_child(_choice_badge("선택됨", Color(0.28, 0.84, 0.59, 0.16), Color(0.28, 0.84, 0.59, 0.52), Color("#dfffee"), "selectedBadge"))
@@ -757,10 +1146,12 @@ func _choice_card_button(choice: Dictionary, selected: bool, disabled: bool, cal
 	return button
 
 func _build_item_choice_card(box: VBoxContainer, choice: Dictionary) -> void:
+	var viewport_size = HtmlLayoutMetrics.viewport_size(get_viewport())
 	var rarity = choice.get("rarity", "Common")
 	box.add_child(_choice_badge(str(rarity).to_upper(), Color(1, 1, 1, 0.14), Color(1, 1, 1, 0.0), _rarity_accent(rarity), "rarityBadge"))
 	var title = _label(choice.get("name", choice.get("id", "아이템")), 16, Color("#ffe29a"), true)
 	title.name = "choiceTitleText"
+	_make_single_line(title)
 	box.add_child(title)
 	var tag_row = _choice_tag_row(choice)
 	if tag_row.get_child_count() > 0:
@@ -769,26 +1160,40 @@ func _build_item_choice_card(box: VBoxContainer, choice: Dictionary) -> void:
 		tag_row.free()
 	var desc = _label(str(choice.get("description", "")), 13, Color("#c8d5e7"), false)
 	desc.name = "choiceDescriptionText"
-	desc.custom_minimum_size = Vector2(0, 44)
+	desc.custom_minimum_size = Vector2(0, HtmlLayoutMetrics.choice_description_height("item", viewport_size))
+	_make_body_label(desc)
 	box.add_child(desc)
-	box.add_child(_choice_meta("현재: %s\n선택 후: %s" % [game.describe_item_current(choice, 0), game.describe_item_current(choice, 1)]))
+	var meta_text = _choice_meta_text(choice)
+	if meta_text != "":
+		box.add_child(_choice_meta(meta_text))
 
 func _build_module_choice_card(box: VBoxContainer, choice: Dictionary) -> void:
+	var viewport_size = HtmlLayoutMetrics.viewport_size(get_viewport())
+	var kind = _choice_kind(choice)
 	var title = _label(choice.get("name", choice.get("label", choice.get("title", choice.get("id", "선택")))), 15, Color("#f4f7fb"), true)
 	title.name = "choiceTitleText"
+	_make_single_line(title)
 	box.add_child(title)
 	var desc = _label(str(choice.get("description", choice.get("body", ""))), 12, Color("#c7d2e1"), false)
 	desc.name = "choiceDescriptionText"
-	desc.custom_minimum_size = Vector2(0, 42)
+	desc.custom_minimum_size = Vector2(0, HtmlLayoutMetrics.choice_description_height(kind, viewport_size))
+	_make_body_label(desc)
 	box.add_child(desc)
 	var tag_row = _choice_tag_row(choice)
 	if tag_row.get_child_count() > 0:
 		box.add_child(tag_row)
 	else:
 		tag_row.free()
+	var meta_text = _choice_meta_text(choice)
+	if meta_text != "":
+		box.add_child(_choice_meta(meta_text))
+
+func _choice_meta_text(choice: Dictionary) -> String:
+	if choice.has("rarity"):
+		return "현재: %s\n선택 후: %s" % [game.describe_item_current(choice, 0), game.describe_item_current(choice, 1)]
 	var meta_lines = []
 	if choice.has("baseDamage"):
-		meta_lines.append("기본 피해 %s / 쿨타임 %.2f초 / 범위 %s" % [choice.get("baseDamage", "-"), float(choice.get("baseCooldown", 0.0)), choice.get("baseRange", "-")])
+		meta_lines.append("기본 피해 %s / 쿨타임 %.2f초\n범위 %s" % [_format_compact_number(choice.get("baseDamage", "-")), float(choice.get("baseCooldown", 0.0)), _format_compact_number(choice.get("baseRange", "-"))])
 	if choice.has("compatibleTags"):
 		var compatible = []
 		for tag in choice.get("compatibleTags", []):
@@ -796,12 +1201,19 @@ func _build_module_choice_card(box: VBoxContainer, choice: Dictionary) -> void:
 		meta_lines.append("호환: %s" % ", ".join(compatible))
 	if choice.has("playstyle"):
 		meta_lines.append("판정 빌드: %s" % choice.get("playstyle", "generic"))
-	if not meta_lines.is_empty():
-		box.add_child(_choice_meta("\n".join(meta_lines)))
+	return "\n".join(meta_lines)
+
+func _format_compact_number(value) -> String:
+	if value is int:
+		return str(value)
+	if value is float:
+		return str(int(value)) if is_equal_approx(value, round(value)) else ("%.1f" % value)
+	return str(value)
 
 func _choice_tag_row(choice: Dictionary) -> HFlowContainer:
 	var row = HFlowContainer.new()
 	row.name = "itemTags"
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_theme_constant_override("h_separation", 4)
 	row.add_theme_constant_override("v_separation", 4)
 	for tag in _choice_tag_keys(choice).slice(0, 5):
@@ -812,16 +1224,27 @@ func _choice_tag_row(choice: Dictionary) -> HFlowContainer:
 func _choice_meta(text: String) -> PanelContainer:
 	var panel = PanelContainer.new()
 	panel.name = "choiceMeta"
-	panel.add_theme_stylebox_override("panel", _style_box(Color(1, 1, 1, 0.06), Color(1, 1, 1, 0.12), 5, 1, 7))
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0)
+	style.border_color = Color(1, 1, 1, 0.12)
+	style.set_border_width(SIDE_TOP, 1)
+	style.content_margin_top = 2
+	style.content_margin_left = 0
+	style.content_margin_right = 0
+	style.content_margin_bottom = 0
+	panel.add_theme_stylebox_override("panel", style)
 	var label = _label(text, 12, Color("#f6d477"), true)
 	label.name = "choiceMetaText"
+	_make_body_label(label)
 	panel.add_child(label)
 	return panel
 
 func _choice_badge(text: String, bg: Color, border: Color, font: Color, node_name: String) -> Label:
 	var label = _label(text, 10, font, true)
 	label.name = node_name
-	label.add_theme_stylebox_override("normal", _style_box(bg, border, 99, 1, 6))
+	_make_single_line(label, false)
+	label.add_theme_stylebox_override("normal", _style_box(bg, border, 99, 1, 5))
 	return label
 
 func _rarity_accent(rarity: String) -> Color:
@@ -833,30 +1256,53 @@ func _make_mouse_transparent(node: Node) -> void:
 	for child in node.get_children():
 		_make_mouse_transparent(child)
 
+func _find_node_named(node: Node, node_name: String) -> Node:
+	if node.name == node_name:
+		return node
+	for child in node.get_children():
+		var found = _find_node_named(child, node_name)
+		if found != null:
+			return found
+	return null
+
 func _inventory_card(item: Dictionary, count: int) -> PanelContainer:
 	var card = PanelContainer.new()
-	card.custom_minimum_size = Vector2(220, 154)
+	card.set_meta("choiceKind", "inventory")
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.custom_minimum_size = Vector2(220, 124)
 	var rarity = item.get("rarity", "Common")
 	var colors = _inventory_rarity_colors(rarity)
-	card.add_theme_stylebox_override("panel", _style_box(colors.bg, colors.border, 6, 1, 10))
+	card.add_theme_stylebox_override("panel", _style_box(colors.bg, colors.border, 6, 1, 3))
 	var box = VBoxContainer.new()
-	box.add_theme_constant_override("separation", 5)
+	box.name = "choiceCardBody"
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.clip_contents = true
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_theme_constant_override("separation", 3)
 	card.add_child(box)
 	var header = HBoxContainer.new()
-	header.add_theme_constant_override("separation", 5)
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	header.add_theme_constant_override("separation", 4)
 	box.add_child(header)
 	var badge = _label("[%s]" % rarity, 10, colors.accent, true)
 	header.add_child(badge)
 	var title = _label("%s x%d" % [item.get("name", item.get("id", "아이템")), count], 12, Color("#edf2f7"), true)
+	title.name = "choiceTitleText"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_make_single_line(title)
 	header.add_child(title)
 	var tags = _choice_tag_text(item)
 	if tags != "":
 		box.add_child(_label("태그: %s" % tags, 10, Color("#aebdd0"), true))
 	var desc = _label(str(item.get("description", "")), 11, Color("#d5e1ef"), false)
-	desc.custom_minimum_size = Vector2(0, 40)
+	desc.name = "choiceDescriptionText"
+	desc.custom_minimum_size = Vector2(0, 30)
+	_make_body_label(desc)
 	box.add_child(desc)
-	box.add_child(_label("현재: %s" % game.describe_item_current(item, 0), 10, Color("#f3c84b"), true))
+	var current = _label("현재: %s" % game.describe_item_current(item, 0), 10, Color("#f3c84b"), true)
+	current.name = "choiceMetaText"
+	_make_body_label(current)
+	box.add_child(current)
 	return card
 
 func _inventory_rarity_colors(rarity: String) -> Dictionary:
@@ -895,11 +1341,164 @@ func _choice_button_text(choice: Dictionary, selected := false) -> String:
 	return "\n".join(lines)
 
 func _choice_button_size(choice: Dictionary) -> Vector2:
+	var viewport_size = HtmlLayoutMetrics.viewport_size(get_viewport())
+	return Vector2(204, HtmlLayoutMetrics.choice_card_min_height(_choice_kind(choice), viewport_size))
+
+func _choice_kind(choice: Dictionary) -> String:
 	if choice.has("rarity"):
-		return Vector2(204, 160)
-	if choice.has("baseDamage") or choice.has("tags"):
-		return Vector2(204, 128)
-	return Vector2(204, 112)
+		return "item"
+	if choice.has("benefits") or choice.has("theme") or choice.has("efficiencyLabel") or choice.has("cost"):
+		return "contract"
+	if choice.has("baseDamage") or choice.has("compatibleTags") or choice.has("playstyle") or choice.has("tags"):
+		return "module"
+	return "generic"
+
+func _apply_choice_text_layout(card: Control, viewport_size: Vector2, card_width := 0.0) -> void:
+	var kind = str(card.get_meta("choiceKind", "generic"))
+	var content_width = _choice_card_content_width(kind, viewport_size, card_width if card_width > 0.0 else card.custom_minimum_size.x)
+	var title = _find_node_named(card, "choiceTitleText")
+	if title is Label:
+		var title_font = _choice_title_font_size(kind, viewport_size)
+		_set_label_font(title, title_font)
+		title.custom_minimum_size = Vector2(0, _line_box_height(title_font))
+	var desc = _find_node_named(card, "choiceDescriptionText")
+	if desc is Label:
+		var desc_font = _choice_description_font_size(kind, viewport_size)
+		_set_label_font(desc, desc_font)
+		var desc_height = max(HtmlLayoutMetrics.choice_description_height(kind, viewport_size), _estimated_text_height(desc.text, desc_font, content_width))
+		desc.custom_minimum_size = Vector2(0, desc_height)
+		_make_body_label(desc)
+	var tag_row = _find_node_named(card, "itemTags")
+	if tag_row is HFlowContainer:
+		tag_row.custom_minimum_size = Vector2(0, _estimated_tag_row_height(tag_row, content_width, viewport_size))
+	var meta = _find_node_named(card, "choiceMetaText")
+	if meta is Label:
+		var meta_font = _choice_meta_font_size(viewport_size)
+		_set_label_font(meta, meta_font)
+		meta.custom_minimum_size = Vector2(0, _estimated_text_height(meta.text, meta_font, content_width))
+		_make_body_label(meta)
+
+func _choice_title_font_size(kind: String, viewport_size: Vector2) -> int:
+	var scale = HtmlLayoutMetrics.text_scale(viewport_size)
+	var compact = HtmlLayoutMetrics.is_compact_viewport(viewport_size)
+	return _scaled_font(16 if kind == "item" else 15, scale, 11 if compact else 13)
+
+func _choice_description_font_size(kind: String, viewport_size: Vector2) -> int:
+	var scale = HtmlLayoutMetrics.text_scale(viewport_size)
+	var compact = HtmlLayoutMetrics.is_compact_viewport(viewport_size)
+	return _scaled_font(13 if kind == "item" else 12, scale, 9 if compact else 11)
+
+func _choice_meta_font_size(viewport_size: Vector2) -> int:
+	var scale = HtmlLayoutMetrics.text_scale(viewport_size)
+	var compact = HtmlLayoutMetrics.is_compact_viewport(viewport_size)
+	return _scaled_font(12, scale, 9 if compact else 11)
+
+func _choice_card_content_width(kind: String, viewport_size: Vector2, card_width: float) -> float:
+	var padding = HtmlLayoutMetrics.choice_card_padding(kind, viewport_size)
+	return max(48.0, card_width - padding * 2.0)
+
+func _choice_card_required_height(card: Control, card_width: float, viewport_size: Vector2) -> float:
+	var kind = str(card.get_meta("choiceKind", "generic"))
+	var padding = HtmlLayoutMetrics.choice_card_padding(kind, viewport_size)
+	var body = card.get_node_or_null("choiceCardBody")
+	if not body is Control:
+		return HtmlLayoutMetrics.choice_card_min_height(kind, viewport_size)
+	var content_width = _choice_card_content_width(kind, viewport_size, card_width)
+	var separation = 6.0
+	if body is BoxContainer:
+		separation = float((body as BoxContainer).get_theme_constant("separation"))
+	var total = padding * 2.0
+	var visible_count = 0
+	for child in body.get_children():
+		if child is Control and child.visible:
+			if visible_count > 0:
+				total += separation
+			total += _choice_child_required_height(child, content_width, viewport_size)
+			visible_count += 1
+	var render_safety = 34.0 if HtmlLayoutMetrics.is_compact_viewport(viewport_size) else 48.0
+	return ceil(total + render_safety)
+
+func _choice_child_required_height(child: Control, content_width: float, viewport_size: Vector2) -> float:
+	if child is HFlowContainer:
+		return _estimated_tag_row_height(child, content_width, viewport_size)
+	if child is PanelContainer and child.name == "choiceMeta":
+		var label = _find_node_named(child, "choiceMetaText")
+		var meta_font = _choice_meta_font_size(viewport_size)
+		var label_height = _estimated_text_height(label.text if label is Label else "", meta_font, content_width)
+		return 12.0 + label_height
+	if child is Label:
+		var label = child as Label
+		var font_size = int(label.get_theme_font_size("font_size"))
+		if label.autowrap_mode == TextServer.AUTOWRAP_OFF:
+			return max(float(label.custom_minimum_size.y), _line_box_height(font_size))
+		return max(float(label.custom_minimum_size.y), _estimated_text_height(label.text, font_size, content_width))
+	return max(float(child.custom_minimum_size.y), child.size.y)
+
+func _line_box_height(font_size: int) -> float:
+	return ceil(float(font_size) * 1.25)
+
+func _estimated_text_height(text: String, font_size: int, width: float) -> float:
+	return _line_box_height(font_size) * float(_estimated_wrapped_lines(text, font_size, width))
+
+func _estimated_wrapped_lines(text: String, font_size: int, width: float) -> int:
+	if text.strip_edges() == "":
+		return 1
+	var safe_width = max(24.0, width)
+	var total = 0
+	for paragraph in text.split("\n"):
+		total += _estimated_paragraph_lines(paragraph, font_size, safe_width)
+	return max(1, total)
+
+func _estimated_paragraph_lines(text: String, font_size: int, width: float) -> int:
+	if text == "":
+		return 1
+	var lines = 1
+	var used = 0.0
+	for index in range(text.length()):
+		var ch = text.substr(index, 1)
+		var ch_width = _estimated_char_width(ch, font_size)
+		if used > 0.0 and used + ch_width > width:
+			lines += 1
+			used = ch_width
+		else:
+			used += ch_width
+	return lines
+
+func _estimated_text_width(text: String, font_size: int) -> float:
+	var width = 0.0
+	for index in range(text.length()):
+		width += _estimated_char_width(text.substr(index, 1), font_size)
+	return width
+
+func _estimated_char_width(ch: String, font_size: int) -> float:
+	var code = ch.unicode_at(0)
+	if code <= 32:
+		return float(font_size) * 0.34
+	if code < 128:
+		return float(font_size) * 0.62
+	return float(font_size) * 1.08
+
+func _estimated_tag_row_height(row: HFlowContainer, content_width: float, viewport_size: Vector2) -> float:
+	if row.get_child_count() == 0:
+		return 0.0
+	var compact = HtmlLayoutMetrics.is_compact_viewport(viewport_size)
+	var font_size = 9 if compact else 10
+	var row_height = 18.0 if compact else 20.0
+	var h_sep = 4.0
+	var v_sep = 4.0
+	var rows = 1
+	var used = 0.0
+	for child in row.get_children():
+		if not child is Label:
+			continue
+		var label = child as Label
+		var item_width = min(content_width, _estimated_text_width(label.text, font_size) + 18.0)
+		if used > 0.0 and used + h_sep + item_width > content_width:
+			rows += 1
+			used = item_width
+		else:
+			used += (h_sep if used > 0.0 else 0.0) + item_width
+	return row_height * float(rows) + v_sep * float(rows - 1)
 
 func _choice_button_variant(choice: Dictionary, selected := false) -> String:
 	if selected:
@@ -1063,7 +1662,7 @@ func _apply_mobile_layout(viewport_size: Vector2) -> void:
 	ui.mobileJoystick.modulate.a = 1.0 if active else 0.0
 
 func _mobile_visible_for_size(viewport_size: Vector2) -> bool:
-	return viewport_size.x < 860.0 or viewport_size.y < 520.0
+	return OS.has_feature("mobile") or HtmlLayoutMetrics.mobile_controls_visible_for_viewport(viewport_size)
 
 func _mobile_joystick_size(viewport_size: Vector2) -> float:
 	return 92.0 if viewport_size.x < viewport_size.y else 86.0
@@ -1158,13 +1757,14 @@ func _style_box(bg: Color, border: Color, radius := 6, border_width := 1, margin
 	return style
 
 func _style_button(button: Button, variant := "default") -> void:
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
 	var normal_bg = Color("#273244")
 	var hover_bg = Color("#34435c")
 	var pressed_bg = Color("#1f2a3b")
 	var border = Color(1, 1, 1, 0.18)
 	var font = Color("#edf2f7")
 	var font_size = 12
-	var margin = 8
+	var margin = 3
 	match variant:
 		"gold":
 			normal_bg = Color("#3c2f13")
@@ -1186,7 +1786,7 @@ func _style_button(button: Button, variant := "default") -> void:
 			font = Color("#ffe4e8")
 		"compact", "toggle":
 			font_size = 11
-			margin = 6
+			margin = 2
 		"choice":
 			normal_bg = Color("#1f2a3b")
 			hover_bg = Color("#263752")
@@ -1194,7 +1794,7 @@ func _style_button(button: Button, variant := "default") -> void:
 			border = Color(0.95, 0.78, 0.29, 0.5)
 			font = Color("#edf2f7")
 			font_size = 12
-			margin = 10
+			margin = 3
 		"choice_common":
 			normal_bg = Color("#1f2a3b")
 			hover_bg = Color("#263752")
@@ -1202,7 +1802,7 @@ func _style_button(button: Button, variant := "default") -> void:
 			border = Color(0.86, 0.91, 0.97, 0.34)
 			font = Color("#dce8f8")
 			font_size = 12
-			margin = 10
+			margin = 3
 		"choice_rare":
 			normal_bg = Color("#1c2d42")
 			hover_bg = Color("#233b59")
@@ -1210,7 +1810,7 @@ func _style_button(button: Button, variant := "default") -> void:
 			border = Color(0.45, 0.75, 1.0, 0.66)
 			font = Color("#e4f3ff")
 			font_size = 12
-			margin = 10
+			margin = 3
 		"choice_epic":
 			normal_bg = Color("#2d2240")
 			hover_bg = Color("#3b2d58")
@@ -1218,7 +1818,7 @@ func _style_button(button: Button, variant := "default") -> void:
 			border = Color(0.82, 0.64, 1.0, 0.7)
 			font = Color("#f3e8ff")
 			font_size = 12
-			margin = 10
+			margin = 3
 		"choice_cursed":
 			normal_bg = Color("#3c1f2b")
 			hover_bg = Color("#532839")
@@ -1226,7 +1826,7 @@ func _style_button(button: Button, variant := "default") -> void:
 			border = Color(1.0, 0.56, 0.63, 0.78)
 			font = Color("#ffe5ea")
 			font_size = 12
-			margin = 10
+			margin = 3
 		"selected_choice":
 			normal_bg = Color("#263d32")
 			hover_bg = Color("#30513f")
@@ -1234,7 +1834,7 @@ func _style_button(button: Button, variant := "default") -> void:
 			border = Color(0.28, 0.84, 0.59, 0.72)
 			font = Color("#dfffee")
 			font_size = 12
-			margin = 10
+			margin = 3
 	button.add_theme_stylebox_override("normal", _style_box(normal_bg, border, 6, 1, margin))
 	button.add_theme_stylebox_override("hover", _style_box(hover_bg, border.lightened(0.16), 6, 1, margin))
 	button.add_theme_stylebox_override("pressed", _style_box(pressed_bg, border, 6, 1, margin))

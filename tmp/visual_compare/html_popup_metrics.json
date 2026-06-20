@@ -1,0 +1,206 @@
+{
+  "combatHud": {
+    "bottom": 372,
+    "h": 360,
+    "right": 282,
+    "w": 270,
+    "x": 12,
+    "y": 12
+  },
+  "debugPanel": {
+    "bottom": 636,
+    "h": 616,
+    "right": 1140,
+    "w": 250,
+    "x": 890,
+    "y": 20
+  },
+  "economyHud": {
+    "bottom": 529,
+    "h": 517,
+    "right": 1140,
+    "w": 255,
+    "x": 885,
+    "y": 12
+  },
+  "overflows": [],
+  "popups": [
+    {
+      "body": {
+        "clientH": 194,
+        "clientW": 333,
+        "cls": "popupBody",
+        "id": "",
+        "rect": {
+          "bottom": 626,
+          "h": 194,
+          "right": 834,
+          "w": 333,
+          "x": 501,
+          "y": 432
+        },
+        "scrollH": 194,
+        "scrollW": 333,
+        "text": "이번 런의 빌드 방향을 즉시 확정하세요. 초반 성장 효율을 끌어올리는 한정 스타터 계약입니다. 인게임 골드만 사용합니다.\n빌드 확정 효율 +240%10G를 지불하면 계약 선택 화면으로 넘어갑니다. 실제 결제가 아니라 인게임 골드만 사용합니다.\n인게임 결제 - 10G\n거절"
+      },
+      "controls": [
+        {
+          "clientH": 35,
+          "clientW": 122,
+          "cls": "firstPurchaseButton",
+          "id": "",
+          "rect": {
+            "bottom": 616,
+            "h": 37,
+            "right": 635,
+            "w": 124,
+            "x": 511,
+            "y": 579
+          },
+          "scrollH": 35,
+          "scrollW": 122,
+          "text": "인게임 결제 - 10G"
+        },
+        {
+          "clientH": 35,
+          "clientW": 45,
+          "cls": "",
+          "id": "",
+          "rect": {
+            "bottom": 616,
+            "h": 37,
+            "right": 689,
+            "w": 46,
+            "x": 643,
+            "y": 579
+          },
+          "scrollH": 35,
+          "scrollW": 45,
+          "text": "거절"
+        }
+      ],
+      "panel": {
+        "clientH": 224,
+        "clientW": 333,
+        "cls": "popupWindow first_purchase_package",
+        "id": "1",
+        "rect": {
+          "bottom": 627,
+          "h": 227,
+          "right": 836,
+          "w": 336,
+          "x": 500,
+          "y": 400
+        },
+        "scrollH": 224,
+        "scrollW": 333,
+        "text": "런 스타터 패키지\n이번 런의 빌드 방향을 즉시 확정하세요. 초반 성장 효율을 끌어올리는 한정 스타터 계약입니다. 인게임 골드만 사용합니다.\n빌드 확정 효율 +240%10G를 지불하면 계약 선택 화면으로 넘어갑니다. 실제 결제가 아니라 인게임 골드만 사용합니다.\n인게임 결제 - 10G\n거"
+      },
+      "title": {
+        "clientH": 18,
+        "clientW": 317,
+        "cls": "popupTitleText",
+        "id": "",
+        "rect": {
+          "bottom": 425,
+          "h": 18,
+          "right": 826,
+          "w": 317,
+          "x": 509,
+          "y": 408
+        },
+        "scrollH": 18,
+        "scrollW": 317,
+        "text": "런 스타터 패키지"
+      }
+    },
+    {
+      "body": {
+        "clientH": 138,
+        "clientW": 283,
+        "cls": "popupBody",
+        "id": "",
+        "rect": {
+          "bottom": 624,
+          "h": 138,
+          "right": 585,
+          "w": 283,
+          "x": 302,
+          "y": 485
+        },
+        "scrollH": 138,
+        "scrollW": 283,
+        "text": "이 창을 유지하면 제한 시간 후 소액 골드 혜택이 지급됩니다. 중간에 닫으면 혜택은 소멸됩니다.\n12.5초\n취소"
+      },
+      "controls": [
+        {
+          "clientH": 35,
+          "clientW": 45,
+          "cls": "",
+          "id": "",
+          "rect": {
+            "bottom": 614,
+            "h": 37,
+            "right": 405,
+            "w": 46,
+            "x": 359,
+            "y": 577
+          },
+          "scrollH": 35,
+          "scrollW": 45,
+          "text": "취소"
+        }
+      ],
+      "panel": {
+        "clientH": 172,
+        "clientW": 283,
+        "cls": "popupWindow timed_reward",
+        "id": "3",
+        "rect": {
+          "bottom": 626,
+          "h": 176,
+          "right": 587,
+          "w": 286,
+          "x": 301,
+          "y": 450
+        },
+        "scrollH": 172,
+        "scrollW": 283,
+        "text": "전투 중 놓치면 손해\nx\n이 창을 유지하면 제한 시간 후 소액 골드 혜택이 지급됩니다. 중간에 닫으면 혜택은 소멸됩니다.\n12.5초\n취소"
+      },
+      "title": {
+        "clientH": 18,
+        "clientW": 235,
+        "cls": "popupTitleText",
+        "id": "",
+        "rect": {
+          "bottom": 477,
+          "h": 18,
+          "right": 545,
+          "w": 235,
+          "x": 310,
+          "y": 460
+        },
+        "scrollH": 18,
+        "scrollW": 235,
+        "text": "전투 중 놓치면 손해"
+      }
+    }
+  ],
+  "shell": {
+    "bottom": 648,
+    "h": 648,
+    "right": 1152,
+    "w": 1152,
+    "x": 0,
+    "y": 0
+  },
+  "statusPanel": {
+    "bottom": 636,
+    "h": 561,
+    "right": 282,
+    "w": 270,
+    "x": 12,
+    "y": 75
+  }
+}

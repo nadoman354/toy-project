@@ -1,16 +1,39 @@
 extends CanvasLayer
 class_name PrototypePopupLayer
 
+const PopupWindowScene = preload("res://scenes/ui/popup/PopupWindow.tscn")
+const HtmlLayoutMetrics = preload("res://scripts/ui/html_layout_metrics.gd")
+
 var game = null
 var root: Control
+var telegraph_root: Control
+var overlay_root: Control
 var windows = {}
 
 func setup(game_root) -> void:
 	game = game_root
-	root = Control.new()
-	root.name = "PopupRoot"
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(root)
+	layer = 20
+	telegraph_root = _ensure_root("PopupTelegraphRoot", 0)
+	root = _ensure_root("PopupRoot", 100)
+	overlay_root = _ensure_root("PopupOverlayRoot", 200)
+
+func telegraph_parent() -> Control:
+	return telegraph_root
+
+func overlay_parent() -> Control:
+	return overlay_root
+
+func _ensure_root(node_name: String, z := 0) -> Control:
+	var existing = get_node_or_null(node_name)
+	var control: Control = existing if existing is Control else null
+	if control == null:
+		control = Control.new()
+		control.name = node_name
+		control.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(control)
+	control.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	control.z_index = z
+	return control
 
 func sync(state: Dictionary) -> void:
 	var active = {}
@@ -26,37 +49,52 @@ func sync(state: Dictionary) -> void:
 			windows.erase(id)
 
 func _create_popup_window(popup: Dictionary) -> void:
-	var panel = PanelContainer.new()
+	var panel = PopupWindowScene.instantiate() as PanelContainer
 	panel.name = "popupWindow_%d" % popup.id
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.z_index = 100 + int(popup.get("z", 0))
+	panel.clip_contents = true
+	panel.custom_minimum_size = popup.size
 	var style = StyleBoxFlat.new()
 	style.bg_color = _popup_bg_color(popup.def.type)
 	style.border_color = _popup_border_color(popup.def.type)
 	style.set_border_width_all(2)
-	style.corner_radius_top_left = 8
-	style.corner_radius_top_right = 8
-	style.corner_radius_bottom_left = 8
-	style.corner_radius_bottom_right = 8
+	style.corner_radius_top_left = 7
+	style.corner_radius_top_right = 7
+	style.corner_radius_bottom_left = 7
+	style.corner_radius_bottom_right = 7
 	panel.add_theme_stylebox_override("panel", style)
 	root.add_child(panel)
+	panel.gui_input.connect(func(event, id = popup.id, p = panel): _panel_event(event, id, p))
 	var box = VBoxContainer.new()
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.clip_contents = true
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_theme_constant_override("separation", 0)
 	panel.add_child(box)
 	var title_frame = PanelContainer.new()
 	title_frame.mouse_filter = Control.MOUSE_FILTER_STOP
+	title_frame.clip_contents = true
+	title_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var title_style = StyleBoxFlat.new()
 	title_style.bg_color = _popup_title_color(popup.def.type)
 	title_style.corner_radius_top_left = 6
 	title_style.corner_radius_top_right = 6
-	title_style.set_content_margin_all(6)
+	title_style.set_content_margin_all(2)
 	title_frame.add_theme_stylebox_override("panel", title_style)
 	box.add_child(title_frame)
 	var title_bar = HBoxContainer.new()
 	title_bar.mouse_filter = Control.MOUSE_FILTER_STOP
-	title_bar.add_theme_constant_override("separation", 6)
+	title_bar.clip_contents = true
+	title_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_bar.add_theme_constant_override("separation", 4)
 	title_frame.add_child(title_bar)
 	var title = Label.new()
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.autowrap_mode = TextServer.AUTOWRAP_OFF
+	title.clip_text = true
 	title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	title.add_theme_font_size_override("font_size", 13)
 	title.add_theme_color_override("font_color", Color.WHITE)
@@ -64,52 +102,74 @@ func _create_popup_window(popup: Dictionary) -> void:
 	if popup.def.type == "stock_broker_app":
 		var min_button = Button.new()
 		min_button.text = "_"
-		min_button.custom_minimum_size = Vector2(24, 22)
+		min_button.custom_minimum_size = Vector2(22, 20)
 		_style_title_button(min_button)
 		min_button.pressed.connect(func(id = popup.id): game.toggle_popup_minimized(id))
 		title_bar.add_child(min_button)
 	if not ["first_purchase_package", "stock_broker_app"].has(popup.def.type):
 		var close = Button.new()
 		close.text = "X"
-		close.custom_minimum_size = Vector2(24, 22)
+		close.custom_minimum_size = Vector2(22, 20)
 		_style_title_button(close)
 		close.pressed.connect(func(id = popup.id): game.request_close_popup(id, {"reason": "button"}))
 		title_bar.add_child(close)
 	var content_frame = PanelContainer.new()
+	content_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content_frame.clip_contents = true
+	content_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var content_style = StyleBoxFlat.new()
 	content_style.bg_color = Color(0, 0, 0, 0)
-	content_style.set_content_margin_all(10)
+	content_style.set_content_margin_all(3)
 	content_frame.add_theme_stylebox_override("panel", content_style)
 	box.add_child(content_frame)
 	var content_box = VBoxContainer.new()
-	content_box.add_theme_constant_override("separation", 8)
+	content_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content_box.clip_contents = true
+	content_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content_box.add_theme_constant_override("separation", 4)
 	content_frame.add_child(content_box)
 	var body = RichTextLabel.new()
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.clip_contents = true
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.bbcode_enabled = true
-	body.custom_minimum_size = Vector2(0, 78)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.custom_minimum_size = Vector2(0, 60)
 	body.fit_content = false
 	body.scroll_active = true
 	body.add_theme_font_size_override("normal_font_size", 13)
 	body.add_theme_color_override("default_color", _popup_text_color(popup.def.type))
 	content_box.add_child(body)
 	var detail = RichTextLabel.new()
+	detail.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	detail.clip_contents = true
+	detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	detail.bbcode_enabled = true
-	detail.custom_minimum_size = Vector2(0, 58)
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail.custom_minimum_size = Vector2(0, 44)
 	detail.fit_content = false
 	detail.scroll_active = false
 	detail.visible = false
 	detail.add_theme_font_size_override("normal_font_size", 12)
 	detail.add_theme_color_override("default_color", _popup_text_color(popup.def.type))
-	detail.add_theme_stylebox_override("normal", _style_box(Color(1, 1, 1, 0.48), Color(0, 0, 0, 0.10), 6, 1, 8))
+	detail.add_theme_stylebox_override("normal", _style_box(Color(1, 1, 1, 0.48), Color(0, 0, 0, 0.10), 6, 1, 2))
 	content_box.add_child(detail)
 	var status_badges = HFlowContainer.new()
-	status_badges.add_theme_constant_override("h_separation", 6)
-	status_badges.add_theme_constant_override("v_separation", 4)
+	status_badges.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	status_badges.clip_contents = true
+	status_badges.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	status_badges.add_theme_constant_override("h_separation", 4)
+	status_badges.add_theme_constant_override("v_separation", 3)
 	status_badges.visible = false
 	content_box.add_child(status_badges)
 	var progress = ProgressBar.new()
+	progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	progress.clip_contents = true
+	progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	progress.show_percentage = false
-	progress.custom_minimum_size = Vector2(0, 10)
+	progress.custom_minimum_size = Vector2(0, 8)
 	var progress_bg = StyleBoxFlat.new()
 	progress_bg.bg_color = Color(0, 0, 0, 0.12)
 	progress.add_theme_stylebox_override("background", progress_bg)
@@ -118,17 +178,26 @@ func _create_popup_window(popup: Dictionary) -> void:
 	progress.add_theme_stylebox_override("fill", progress_fill)
 	content_box.add_child(progress)
 	var chart = Control.new()
-	chart.custom_minimum_size = Vector2(0, 72)
+	chart.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chart.clip_contents = true
+	chart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chart.custom_minimum_size = Vector2(0, 54)
 	chart.visible = false
 	content_box.add_child(chart)
 	chart.draw.connect(func(): _draw_stock_chart(chart, popup.id))
 	var controls = HFlowContainer.new()
-	controls.add_theme_constant_override("h_separation", 8)
-	controls.add_theme_constant_override("v_separation", 8)
+	controls.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	controls.clip_contents = true
+	controls.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	controls.add_theme_constant_override("h_separation", 4)
+	controls.add_theme_constant_override("v_separation", 4)
 	content_box.add_child(controls)
 	title_bar.gui_input.connect(func(event, id = popup.id, p = panel): _drag_event(event, id, p))
 	windows[popup.id] = {
 		"panel": panel,
+		"title_bar": title_bar,
+		"content_frame": content_frame,
+		"content_box": content_box,
 		"title_frame": title_frame,
 		"title": title,
 		"body": body,
@@ -141,6 +210,7 @@ func _create_popup_window(popup: Dictionary) -> void:
 		"dragOffset": Vector2.ZERO,
 		"dragStartMouse": Vector2.ZERO,
 		"dragOriginPosition": popup.position,
+		"controlsSignature": "",
 	}
 
 func _update_popup_window(popup: Dictionary) -> void:
@@ -149,11 +219,13 @@ func _update_popup_window(popup: Dictionary) -> void:
 		return
 	record.panel.position = popup.position
 	record.panel.size = popup.size
+	record.panel.z_index = 100 + int(popup.get("z", 0))
 	record.title.text = _popup_title(popup)
 	record.body.text = _popup_body(popup)
 	var detail_text = _popup_detail(popup)
 	record.detail.text = detail_text
 	record.detail.visible = detail_text != ""
+	_apply_popup_content_layout(popup, record)
 	_update_status_badges(popup, record.statusBadges)
 	record.progress.visible = popup.def.get("duration", 0.0) > 0.0 or popup.def.type in ["clean_challenge", "interest_offer", "recurring_investment", "stock_broker_app", "stock_market"]
 	record.progress.value = clamp(float(popup.get("progress", 0.0)) * 100.0, 0.0, 100.0)
@@ -173,7 +245,106 @@ func _update_popup_window(popup: Dictionary) -> void:
 	record.progress.visible = record.progress.visible and not popup.get("minimized", false)
 	record.chart.visible = record.chart.visible and not popup.get("minimized", false)
 	record.controls.visible = not popup.get("minimized", false)
-	_rebuild_controls(popup, record.controls)
+	var controls_signature = _controls_signature(popup)
+	if record.get("controlsSignature", "") != controls_signature:
+		_rebuild_controls(popup, record.controls)
+		record.controlsSignature = controls_signature
+		_apply_popup_content_layout(popup, record)
+
+func _apply_popup_content_layout(popup: Dictionary, record: Dictionary) -> void:
+	var viewport_size = HtmlLayoutMetrics.viewport_size(get_viewport())
+	var popup_size = popup.size
+	var minimized_stock_app = popup.get("minimized", false) and popup.def.type == "stock_broker_app"
+	if minimized_stock_app:
+		popup_size = Vector2(min(300.0, popup.size.x), 34.0 if HtmlLayoutMetrics.is_compact_viewport(viewport_size) else 38.0)
+	var layout = HtmlLayoutMetrics.popup_content_layout(
+		viewport_size,
+		str(popup.def.get("type", "")),
+		popup_size,
+		"" if minimized_stock_app else str(record.body.text),
+		"" if minimized_stock_app else str(record.detail.text),
+		_popup_has_layout_badge(popup)
+	)
+	if not minimized_stock_app:
+		var resolved_size = layout.get("panel_size", popup_size)
+		if resolved_size != popup_size:
+			layout = HtmlLayoutMetrics.popup_content_layout(
+				viewport_size,
+				str(popup.def.get("type", "")),
+				resolved_size,
+				str(record.body.text),
+				str(record.detail.text),
+				_popup_has_layout_badge(popup)
+			)
+			resolved_size = layout.get("panel_size", resolved_size)
+		popup_size = resolved_size
+		popup.size = popup_size
+		_clamp_popup_to_viewport(popup, viewport_size)
+	record.panel.position = popup.position
+	record.panel.size = popup_size
+	record.panel.custom_minimum_size = popup_size
+	record.title.add_theme_font_size_override("font_size", int(layout.title_font))
+	if record.has("content_frame") and record.content_frame is PanelContainer:
+		var content_style = StyleBoxFlat.new()
+		content_style.bg_color = Color(0, 0, 0, 0)
+		content_style.set_content_margin_all(int(layout.content_margin))
+		record.content_frame.add_theme_stylebox_override("panel", content_style)
+	if record.has("title_frame") and record.title_frame is PanelContainer:
+		var title_style = StyleBoxFlat.new()
+		title_style.bg_color = _popup_title_color(popup.def.type)
+		title_style.corner_radius_top_left = 6
+		title_style.corner_radius_top_right = 6
+		title_style.set_content_margin_all(max(1, int(layout.content_margin * 0.5)))
+		record.title_frame.add_theme_stylebox_override("panel", title_style)
+		record.title_frame.custom_minimum_size = Vector2(0, float(layout.title_height))
+	if record.has("content_box") and record.content_box is VBoxContainer:
+		record.content_box.add_theme_constant_override("separation", int(layout.gap))
+	var body_height = float(layout.body_height)
+	record.body.custom_minimum_size = Vector2(0, body_height)
+	_apply_popup_text_contract(record.body, popup, layout, "body")
+	record.detail.custom_minimum_size = Vector2(0, float(layout.detail_height))
+	_apply_popup_text_contract(record.detail, popup, layout, "detail")
+	record.chart.custom_minimum_size = Vector2(0, float(layout.chart_height))
+	record.controls.add_theme_constant_override("h_separation", int(layout.gap))
+	record.controls.add_theme_constant_override("v_separation", int(layout.gap))
+	_apply_popup_button_layout(record.controls, int(layout.button_font), float(layout.button_height), float(layout.button_min_width), float(layout.button_max_width), float(layout.control_label_width))
+
+func _popup_has_layout_badge(popup: Dictionary) -> bool:
+	return popup.get("inputGrace", 0.0) > 0.0 or popup.get("securityQuarantineTimer", 0.0) > 0.0 or popup.get("infectedByPopup", false) or _popup_has_lock_badge(popup)
+
+func _clamp_popup_to_viewport(popup: Dictionary, viewport_size: Vector2) -> void:
+	var margin = 6.0
+	popup.position.x = clamp(float(popup.position.x), margin, max(margin, viewport_size.x - float(popup.size.x) - margin))
+	popup.position.y = clamp(float(popup.position.y), margin, max(margin, viewport_size.y - float(popup.size.y) - margin))
+
+func _apply_popup_text_contract(label: RichTextLabel, popup: Dictionary, layout: Dictionary, role: String) -> void:
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.clip_contents = true
+	label.bbcode_enabled = true
+	label.fit_content = false
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.scroll_active = bool(layout.body_scroll) if role == "body" else bool(layout.detail_scroll)
+	var font_size = int(layout.body_font) if role == "body" else int(layout.detail_font)
+	label.add_theme_font_size_override("normal_font_size", font_size)
+	label.add_theme_color_override("default_color", _popup_text_color(popup.def.type))
+
+func _apply_popup_button_layout(node: Node, font_size: int, min_height: float, min_width: float, max_width: float, control_label_width: float) -> void:
+	for child in node.get_children():
+		if child is Button:
+			child.add_theme_font_size_override("font_size", font_size)
+			child.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			child.clip_contents = true
+			child.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+			var width = clamp(float(child.custom_minimum_size.x), min_width, max_width)
+			child.custom_minimum_size = Vector2(width, max(float(child.custom_minimum_size.y), min_height))
+		elif child is Label:
+			child.add_theme_font_size_override("font_size", font_size)
+			child.clip_text = true
+			child.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+			child.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+			child.custom_minimum_size = Vector2(control_label_width, min_height)
+		_apply_popup_button_layout(child, font_size, min_height, min_width, max_width, control_label_width)
 
 func _popup_title(popup: Dictionary) -> String:
 	var title = popup.def.get("title", "팝업")
@@ -404,8 +575,55 @@ func _infected_detail_text(popup: Dictionary) -> String:
 func _moving_close_detail_text(popup: Dictionary) -> String:
 	return "이 창은 자동으로 이동합니다.\n속도: %.0f, %.0f\n직접 따라가서 닫거나 쓰레기존으로 끌어야 합니다." % [popup.velocity.x, popup.velocity.y]
 
+func _controls_signature(popup: Dictionary) -> String:
+	var type = str(popup.def.get("type", ""))
+	var parts = [
+		type,
+		"grace:%s" % str(float(popup.get("inputGrace", 0.0)) > 0.0),
+		"min:%s" % str(popup.get("minimized", false)),
+	]
+	match type:
+		"first_purchase_package":
+			var cost = game.first_purchase_cost()
+			parts.append("afford:%s" % str(game.state.gold >= cost))
+		"boss_package_ad":
+			var package_cost = int(popup.get("packageCost", 0))
+			parts.append("cost:%d" % package_cost)
+			parts.append("afford:%s" % str(game.state.gold >= package_cost))
+		"security_installer":
+			var program_def = game.security_program_def(popup.def.get("installProgram", ""))
+			var installed = false if program_def.is_empty() else game.installed_resident_program(program_def.type) != null
+			var install_cost = 0 if program_def.is_empty() else int(program_def.installCost)
+			parts.append("installed:%s" % str(installed))
+			parts.append("afford:%s" % str(game.state.gold >= install_cost))
+		"terms":
+			parts.append("checked:%s" % str(popup.get("termsRiskChecked", true)))
+		"interest_offer":
+			parts.append("accepted:%s" % str(popup.get("interestAccepted", false)))
+			parts.append("matured:%s" % str(popup.get("interestMatured", false)))
+		"recurring_investment":
+			parts.append("accepted:%s" % str(popup.has("investment") and popup.investment.get("accepted", false)))
+			parts.append("matured:%s" % str(popup.has("investment") and popup.investment.get("matured", false)))
+		"loan_offer":
+			parts.append("credit:%d" % int(game.state.creditScore))
+		"stock_broker_app":
+			var stock = game.state.stockMarket.stock
+			var price = int(ceil(float(stock.price)))
+			parts.append("buy:%s" % str(game.state.gold >= price))
+			parts.append("shares:%d" % int(stock.shares))
+		"stock_market":
+			parts.append("invested:%s" % str(popup.has("stock") and popup.stock.get("invested", false)))
+			for principal in popup.def.get("principalOptions", [50, 100, 150]):
+				parts.append("p%d:%s" % [int(principal), str(game.state.gold >= int(principal))])
+		"popup_store":
+			for product in popup.get("storeProducts", game.data.POPUP_STORE_CATALOG):
+				var price = game.popup_store_price(product)
+				parts.append("%s:%d:%s" % [product.get("id", product.get("label", "product")), price, str(game.state.gold >= price)])
+	return "|".join(parts)
+
 func _rebuild_controls(popup: Dictionary, controls: Node) -> void:
 	for child in controls.get_children():
+		controls.remove_child(child)
 		child.queue_free()
 	var type = popup.def.type
 	match type:
@@ -494,8 +712,11 @@ func _rebuild_controls(popup: Dictionary, controls: Node) -> void:
 
 func _button(parent: Node, text: String, callback: Callable, disabled := false, min_size := Vector2(96, 34)) -> Button:
 	var button = Button.new()
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	button.clip_contents = true
 	button.text = text
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	button.custom_minimum_size = min_size
 	button.disabled = disabled
 	_style_popup_button(button)
@@ -505,8 +726,11 @@ func _button(parent: Node, text: String, callback: Callable, disabled := false, 
 
 func _control_label(parent: Node, text: String) -> Label:
 	var label = Label.new()
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.clip_text = true
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.text = text
-	label.custom_minimum_size = Vector2(64, 34)
+	label.custom_minimum_size = Vector2(56, 28)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 12)
@@ -547,7 +771,11 @@ func _popup_has_lock_badge(popup: Dictionary) -> bool:
 
 func _status_badge(parent: Node, text: String, bg: Color, border: Color, font: Color) -> Label:
 	var label = Label.new()
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.text = text
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	label.clip_text = true
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.add_theme_font_size_override("font_size", 10)
 	label.add_theme_color_override("font_color", font)
 	label.add_theme_stylebox_override("normal", _style_box(bg, border, 99, 1, 6))
@@ -570,6 +798,26 @@ func _progress_color(popup: Dictionary) -> Color:
 		"sponsored_ad":
 			return Color("#d8aa27")
 	return _popup_title_color(popup.def.type)
+
+func _input(event: InputEvent) -> void:
+	for popup_id in windows.keys():
+		var record = windows.get(popup_id, null)
+		if record == null or not record.get("dragging", false):
+			continue
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+			record.dragging = false
+			game.settle_dragged_popup(int(popup_id))
+		elif event is InputEventMouseMotion:
+			var panel = record.panel
+			var delta = root.get_local_mouse_position() - record.dragStartMouse
+			game.move_popup(int(popup_id), record.dragOriginPosition + delta * game.popup_drag_multiplier())
+			if panel is Control:
+				panel.position = game.popup_by_id(int(popup_id)).position if game.popup_by_id(int(popup_id)) != null else panel.position
+
+func _panel_event(event: InputEvent, popup_id: int, panel: PanelContainer) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		panel.move_to_front()
+		game.bring_popup_to_front(popup_id)
 
 func _drag_event(event: InputEvent, popup_id: int, panel: PanelContainer) -> void:
 	var record = windows.get(popup_id, null)
@@ -743,14 +991,15 @@ func _style_box(bg: Color, border: Color, radius := 6, border_width := 1, margin
 	return style
 
 func _style_popup_button(button: Button) -> void:
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
 	var normal_bg = Color(1, 1, 1, 0.75)
 	var hover_bg = Color(1, 1, 1, 0.92)
 	var pressed_bg = Color(0.88, 0.92, 0.96, 0.96)
 	var border = Color(0, 0, 0, 0.22)
-	button.add_theme_stylebox_override("normal", _style_box(normal_bg, border, 5, 1, 8))
-	button.add_theme_stylebox_override("hover", _style_box(hover_bg, border, 5, 1, 8))
-	button.add_theme_stylebox_override("pressed", _style_box(pressed_bg, border, 5, 1, 8))
-	button.add_theme_stylebox_override("disabled", _style_box(Color(1, 1, 1, 0.36), Color(0, 0, 0, 0.12), 5, 1, 8))
+	button.add_theme_stylebox_override("normal", _style_box(normal_bg, border, 5, 1, 3))
+	button.add_theme_stylebox_override("hover", _style_box(hover_bg, border, 5, 1, 3))
+	button.add_theme_stylebox_override("pressed", _style_box(pressed_bg, border, 5, 1, 3))
+	button.add_theme_stylebox_override("disabled", _style_box(Color(1, 1, 1, 0.36), Color(0, 0, 0, 0.12), 5, 1, 3))
 	button.add_theme_color_override("font_color", Color("#15202b"))
 	button.add_theme_color_override("font_hover_color", Color("#15202b"))
 	button.add_theme_color_override("font_pressed_color", Color("#15202b"))
@@ -758,6 +1007,7 @@ func _style_popup_button(button: Button) -> void:
 	button.add_theme_font_size_override("font_size", 12)
 
 func _style_title_button(button: Button) -> void:
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
 	var bg = Color(0, 0, 0, 0.22)
 	var hover = Color(0, 0, 0, 0.34)
 	var border = Color(1, 1, 1, 0.22)

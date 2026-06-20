@@ -6,8 +6,22 @@ const PrototypeWorldScript = preload("res://scripts/v2/prototype_world.gd")
 const PrototypeHudScript = preload("res://scripts/v2/prototype_hud.gd")
 const PrototypePopupLayerScript = preload("res://scripts/v2/prototype_popup_layer.gd")
 const InputControllerScript = preload("res://scripts/v2/input_controller.gd")
+const DataRegistryScript = preload("res://scripts/data/data_registry.gd")
+const RunCoordinatorScript = preload("res://scripts/systems/run_coordinator.gd")
+const PrototypeModalLayerScript = preload("res://scripts/ui/modal/prototype_modal_layer.gd")
+const PrototypeDebugLayerScript = preload("res://scripts/debug/prototype_debug_layer.gd")
+const PopupClosePolicyScript = preload("res://scripts/systems/popup_close_policy.gd")
+const HtmlLayoutMetrics = preload("res://scripts/ui/html_layout_metrics.gd")
 
 const DATA_PATH = "res://scripts/data/prototype_data.json"
+const PROGRESSION_CHOICE_DEFAULTS = {
+	"enableAdvancedBuildChoices": false,
+	"enableBuildOptimizationChoices": false,
+	"enableAttackFormChoices": true,
+	"enableAttackMechanicChoices": true,
+	"enableSynergyChoices": false,
+	"enableDeepeningChoices": false,
+}
 
 var rng = RandomNumberGenerator.new()
 var data = {}
@@ -17,34 +31,52 @@ var popup_id_seed = 1
 var z_seed = 1200
 
 var input_controller
+var data_registry
+var run_coordinator
 var world
 var hud
 var popup_layer
+var modal_layer
+var debug_layer
 
 func _ready() -> void:
 	rng.randomize()
 	_load_data()
 	input_controller = InputControllerScript.new(self)
-	world = PrototypeWorldScript.new()
-	add_child(world)
-	world.setup(self)
-	popup_layer = PrototypePopupLayerScript.new()
-	add_child(popup_layer)
-	popup_layer.setup(self)
-	hud = PrototypeHudScript.new()
-	add_child(hud)
-	hud.setup(self)
+	_setup_scene_nodes()
+	run_coordinator = RunCoordinatorScript.new(self)
 	reset_game()
 
+func _setup_scene_nodes() -> void:
+	world = _resolve_or_create_child("WorldLayer", PrototypeWorldScript)
+	world.setup(self)
+	popup_layer = _resolve_or_create_child("PopupLayer", PrototypePopupLayerScript)
+	popup_layer.setup(self)
+	modal_layer = _resolve_or_create_child("ModalLayer", PrototypeModalLayerScript)
+	modal_layer.setup(self)
+	debug_layer = _resolve_or_create_child("DebugLayer", PrototypeDebugLayerScript)
+	debug_layer.setup(self)
+	hud = _resolve_or_create_child("HudLayer", PrototypeHudScript)
+	hud.setup(self)
+
+func _resolve_or_create_child(node_name: String, script_resource: Script) -> Node:
+	var node = get_node_or_null(node_name)
+	if node == null:
+		node = script_resource.new()
+		node.name = node_name
+		add_child(node)
+	elif node.get_script() == null:
+		node.set_script(script_resource)
+	return node
+
 func _load_data() -> void:
-	var file = FileAccess.open(DATA_PATH, FileAccess.READ)
-	if file == null:
-		push_error("prototype_data.json not found")
+	data_registry = DataRegistryScript.new(DATA_PATH)
+	if not data_registry.load():
 		data = {}
 		config = {}
 		return
-	data = JSON.parse_string(file.get_as_text())
-	config = data.get("CONFIG", {})
+	data = data_registry.data
+	config = data_registry.config
 
 func reset_game() -> void:
 	popup_id_seed = 1
@@ -56,16 +88,7 @@ func reset_game() -> void:
 	call_deferred("open_attack_module_selection", "primary")
 
 func _process(delta: float) -> void:
-	if state.is_empty():
-		return
-	input_controller.update_shortcuts(state)
-	var dt = min(delta * float(state.timeScale), 0.05)
-	if not state.gameOver and not state.paused:
-		update_game(dt)
-	update_visual_timers(dt)
-	popup_layer.sync(state)
-	hud.update_from_state(state)
-	world.queue_redraw()
+	run_coordinator.tick(delta)
 
 func update_game(dt: float) -> void:
 	state.elapsed += dt
@@ -106,6 +129,12 @@ func update_visual_timers(dt: float) -> void:
 
 func is_selecting() -> bool:
 	return state.selectingItem or state.selectingPerk or state.selectingModule or state.selectingPaidReward
+
+func progression_choice_enabled(key: String) -> bool:
+	return bool(config.get(key, PROGRESSION_CHOICE_DEFAULTS.get(key, false)))
+
+func advanced_build_choices_enabled() -> bool:
+	return progression_choice_enabled("enableAdvancedBuildChoices")
 
 func camera_position() -> Vector2:
 	var viewport = get_viewport().get_visible_rect().size
@@ -567,6 +596,9 @@ func spawn_field_pickup(position: Vector2, kind: String, value: int) -> void:
 func spawn_special_consumable_drop(position: Vector2, kind: String) -> void:
 	state.pickups.append({"position": position, "kind": kind, "value": 0, "life": 16.0})
 
+func pickup_collection_radius(pickup: Dictionary) -> float:
+	return float(state.player.radius) + float(pickup.get("radius", 6.0)) + 8.0
+
 func update_pickups(dt: float) -> void:
 	for pickup in state.pickups.duplicate():
 		pickup.life -= dt
@@ -574,7 +606,11 @@ func update_pickups(dt: float) -> void:
 			for other in state.pickups:
 				if other != pickup:
 					other.position = other.position.move_toward(state.player.position, 520.0 * dt)
-		if pickup.position.distance_to(state.player.position) <= effective_pickup_range():
+		var distance = pickup.position.distance_to(state.player.position)
+		if distance <= effective_pickup_range():
+			pickup.position = pickup.position.move_toward(state.player.position, 520.0 * dt)
+			distance = pickup.position.distance_to(state.player.position)
+		if distance <= pickup_collection_radius(pickup):
 			collect_pickup(pickup)
 		elif pickup.life <= 0.0:
 			state.pickups.erase(pickup)
@@ -620,17 +656,19 @@ func add_xp(amount: int) -> void:
 	check_level_up()
 
 func check_level_up() -> void:
-	while state.xp >= state.xpNeed:
+	while state.xp >= state.xpNeed and not is_selecting():
 		state.xp -= state.xpNeed
 		state.level += 1
 		state.xpNeed = int(ceil(float(state.xpNeed) * float(config.xpRequirementGrowth)))
 		open_level_choice()
+		if is_selecting():
+			break
 
 func open_level_choice() -> void:
 	if is_selecting():
 		return
 	var label = next_growth_choice_label()
-	if state.level == 3 and state.secondaryModule == "":
+	if state.level >= 5 and state.secondaryModule == "":
 		open_attack_module_selection("secondary")
 	elif label == "공격 방식":
 		open_attack_form_selection("primary")
@@ -643,30 +681,40 @@ func open_level_choice() -> void:
 	elif label == "심화 선택":
 		open_deepening_selection("primary")
 	else:
-		open_item_like_overlay("성장 보상", "레벨 성장은 공격 모듈과 팝업 관리 능력을 강화합니다.", choose_perk_options(3), Callable(self, "apply_perk_choice"))
+		apply_automatic_mastery_level()
 
 func next_growth_choice_label() -> String:
 	if state.primaryModule == "":
 		return "시작 선택"
-	if state.level == 3 and state.secondaryModule == "":
+	if state.level >= 5 and state.secondaryModule == "":
 		return "보조 모듈"
-	if [5, 9].has(state.level):
+	if progression_choice_enabled("enableAttackFormChoices") and state.level == 9:
 		return "공격 방식"
-	if [7, 13].has(state.level):
+	if progression_choice_enabled("enableAttackMechanicChoices") and state.level == 13:
 		return "공격 기믹"
-	if [11, 17].has(state.level):
+	if advanced_build_choices_enabled() and progression_choice_enabled("enableBuildOptimizationChoices") and state.level == 17:
 		return "빌드 최적화"
-	if state.level == 15 and state.secondaryModule != "" and state.moduleSynergy.is_empty():
+	if advanced_build_choices_enabled() and progression_choice_enabled("enableSynergyChoices") and state.level == 15 and state.secondaryModule != "" and state.moduleSynergy.is_empty():
 		return "공격 연계"
-	if state.level % 4 == 0:
+	if advanced_build_choices_enabled() and progression_choice_enabled("enableDeepeningChoices") and state.level % 4 == 0:
 		return "심화 선택"
 	return "패시브 보상"
+
+func apply_automatic_mastery_level() -> void:
+	if state.primaryModule != "":
+		state.primaryMastery += 1
+	if state.secondaryModule != "":
+		state.secondaryMastery += 1
+	state.recentPerkText = "숙련 상승: 1차 %d / 보조 %d" % [state.primaryMastery, state.secondaryMastery]
+	hud.hide_choices()
+	state.paused = false
 
 func open_attack_module_selection(slot: String) -> void:
 	state.selectingModule = true
 	state.paused = true
-	var title = "1차 모듈 선택" if slot == "primary" else "보조 모듈 선택"
-	hud.show_choices(title, "공격 모듈을 선택하면 자동 전투 루프가 시작됩니다.", data.ATTACK_MODULES, func(choice): apply_attack_module_choice(slot, choice), 2)
+	var title = "시작 1차 공격 모듈 선택" if slot == "primary" else "Lv.5 보조 공격 모듈 선택"
+	var description = "선택 전까지 게임은 멈춥니다. 이번 런의 기본 공격 방식을 고르세요." if slot == "primary" else "1차 공격 모듈과 다른 보조 모듈을 선택합니다."
+	hud.show_choices(title, description, data.ATTACK_MODULES, func(choice): apply_attack_module_choice(slot, choice), 3)
 
 func apply_attack_module_choice(slot: String, choice: Dictionary) -> void:
 	state["%sModule" % slot] = choice.id
@@ -1351,26 +1399,7 @@ func popup_telegraph_duration(def: Dictionary) -> float:
 	return 0.0
 
 func popup_size_for(def: Dictionary) -> Vector2:
-	match def.type:
-		"system_notice":
-			return Vector2(320, 180)
-		"terms":
-			return Vector2(318, 218)
-		"timed_reward":
-			return Vector2(286, 168)
-		"sponsored_ad":
-			return Vector2(300, 190)
-		"first_purchase_package", "boss_package_ad", "popup_store":
-			return Vector2(342, 310)
-		"stock_broker_app":
-			return Vector2(370, 330)
-		"recurring_investment", "loan_offer", "interest_offer", "stock_market":
-			return Vector2(326, 230)
-		"clean_challenge":
-			return Vector2(304, 188)
-		"security_installer", "security_update_notice":
-			return Vector2(318, 220)
-	return Vector2(300, 184)
+	return HtmlLayoutMetrics.popup_size_for_type(str(def.get("type", "")))
 
 func choose_popup_position(def: Dictionary) -> Vector2:
 	var viewport = get_viewport().get_visible_rect().size
@@ -1387,7 +1416,7 @@ func choose_popup_position(def: Dictionary) -> Vector2:
 		avoid_rects.append(pointer_rect)
 	var best = null
 	var best_score = INF
-	for i in range(40):
+	for i in range(80):
 		var candidate = popup_candidate_position(i, viewport, size, margin)
 		var rect = Rect2(Vector2(clamp(candidate.x, margin, max(margin, viewport.x - size.x - margin)), clamp(candidate.y, margin, max(margin, viewport.y - size.y - margin))), size)
 		var pushed = push_rect_out_of_popup_overlap(rect, margin, viewport.x, viewport.y)
@@ -1397,13 +1426,37 @@ func choose_popup_position(def: Dictionary) -> Vector2:
 			best_score = score
 		if is_equal_approx(score, 0.0):
 			return pushed.position
+	var grid_position = popup_grid_fallback_position(size, margin, viewport, avoid_rects)
+	if grid_position != null:
+		return grid_position
 	if best != null:
 		return best.position
 	var fallback = push_rect_out_of_popup_overlap(Rect2(Vector2(max(margin, viewport.x - size.x - margin), margin), size), margin, viewport.x, viewport.y)
 	return fallback.position
 
+func popup_grid_fallback_position(size: Vector2, margin: float, viewport: Vector2, avoid_rects: Array):
+	var step = 48.0
+	var max_x = max(margin, viewport.x - size.x - margin)
+	var max_y = max(margin, viewport.y - size.y - margin)
+	var y = margin
+	while y <= max_y:
+		var x = margin
+		while x <= max_x:
+			var rect = push_rect_out_of_popup_overlap(Rect2(Vector2(x, y), size), margin, viewport.x, viewport.y)
+			if is_equal_approx(popup_placement_score(rect, avoid_rects), 0.0):
+				return rect.position
+			x += step
+		y += step
+	return null
+
 func popup_candidate_position(index: int, viewport: Vector2, size: Vector2, margin: float) -> Vector2:
 	var fixed = [
+		Vector2(margin, viewport.y * 0.30),
+		Vector2(viewport.x - size.x - margin, viewport.y * 0.30),
+		Vector2(margin, viewport.y * 0.50 - size.y * 0.5),
+		Vector2(viewport.x - size.x - margin, viewport.y * 0.50 - size.y * 0.5),
+		Vector2(margin, viewport.y * 0.70 - size.y * 0.5),
+		Vector2(viewport.x - size.x - margin, viewport.y * 0.70 - size.y * 0.5),
 		Vector2(viewport.x * 0.32, margin),
 		Vector2(viewport.x * 0.50 - size.x * 0.5, margin),
 		Vector2(viewport.x * 0.32, viewport.y - size.y - margin),
@@ -1437,15 +1490,19 @@ func random_between(a: float, b: float) -> float:
 
 func hud_avoid_rects(viewport: Vector2) -> Array:
 	var rects = [
-		padded_rect(Vector2(12, 12), Vector2(270, 274), 10),
-		padded_rect(Vector2(viewport.x - 267, 12), Vector2(255, 570), 10),
-		padded_rect(Vector2((viewport.x - 340) * 0.5, 10), Vector2(340, 68), 10),
-		padded_rect(Vector2(12, viewport.y - 148), Vector2(270, 136), 8),
-		padded_rect(Vector2(viewport.x - 262, viewport.y - 420), Vector2(250, 408), 8),
+		_padded_layout_rect(HtmlLayoutMetrics.combat_hud_rect(viewport), 10),
+		_padded_layout_rect(HtmlLayoutMetrics.economy_hud_rect(viewport), 10),
+		_padded_layout_rect(HtmlLayoutMetrics.difficulty_hud_rect(viewport), 10),
+		_padded_layout_rect(HtmlLayoutMetrics.status_hud_rect(viewport), 8),
 	]
+	if HtmlLayoutMetrics.debug_visible_for_viewport(viewport):
+		rects.append(_padded_layout_rect(HtmlLayoutMetrics.debug_hud_rect(viewport), 8))
 	if state.cleanupComboValue > 0:
-		rects.append(padded_rect(Vector2((viewport.x - 260) * 0.5, 64), Vector2(260, 58), 8))
+		rects.append(_padded_layout_rect(HtmlLayoutMetrics.cleanup_hud_rect(viewport), 8))
 	return rects
+
+func _padded_layout_rect(rect: Rect2, padding: float) -> Rect2:
+	return padded_rect(rect.position, rect.size, padding)
 
 func padded_rect(position: Vector2, size: Vector2, padding: float) -> Rect2:
 	return Rect2(position - Vector2(padding, padding), size + Vector2(padding * 2.0, padding * 2.0))
@@ -1489,6 +1546,8 @@ func popup_placement_score(rect: Rect2, avoid_rects: Array, ignore_id := -1) -> 
 		var overlap = overlap_size(rect, other)
 		var max_width = min(rect.size.x, other.size.x) * float(config.get("popupOverlapMaxWidthRatio", 0.5))
 		var max_height = min(rect.size.y, other.size.y) * float(config.get("popupOverlapMaxHeightRatio", 0.5))
+		if overlap.x > max_width and overlap.y > max_height:
+			score += 1000000.0 + overlap.x * overlap.y * 50.0
 		score += max(0.0, overlap.x - max_width) * max(0.0, overlap.y - max_height)
 	return score
 
@@ -1573,15 +1632,20 @@ func request_close_popup(id: int, options = {}) -> void:
 	var popup = popup_by_id(id)
 	if popup == null:
 		return
-	if popup.def.type == "stock_broker_app":
-		create_system_growth_popup("증권 앱 고정", "증권 앱은 닫을 수 없습니다. 최소화하거나 전량 매도만 할 수 있습니다.")
-		return
-	if popup.def.type == "first_purchase_package":
-		create_system_growth_popup("첫 결제 대기", "첫 결제 팝업은 창 닫기나 긴급 닫기로 닫을 수 없습니다. 결제하거나 거절을 선택하세요.")
-		return
-	if is_popup_locked(popup):
-		create_system_growth_popup("정산 필요", "돈이 걸린 팝업은 내부의 정산/해지/매도 버튼으로 처리해야 닫을 수 있습니다.")
-		return
+	var close_policy = PopupClosePolicyScript.policy_for(popup)
+	match close_policy:
+		PopupClosePolicyScript.MINIMIZE_ONLY:
+			create_system_growth_popup("증권 앱 고정", "증권 앱은 닫을 수 없습니다. 최소화하거나 전량 매도만 할 수 있습니다.")
+			return
+		PopupClosePolicyScript.FORCED_CHOICE:
+			create_system_growth_popup("첫 결제 대기", "첫 결제 팝업은 창 닫기나 긴급 닫기로 닫을 수 없습니다. 결제하거나 거절을 선택하세요.")
+			return
+		PopupClosePolicyScript.INTERNAL_RESOLVE:
+			create_system_growth_popup("정산 필요", "돈이 걸린 팝업은 내부의 정산/해지/매도 버튼으로 처리해야 닫을 수 있습니다.")
+			return
+		PopupClosePolicyScript.INPUT_GRACE:
+			create_system_growth_popup("입력 유예 중", "잠시 후 다시 닫을 수 있습니다.")
+			return
 	var reason = options.get("reason", "button")
 	if reason == "volatile":
 		trigger_volatile_popup_close(id)
@@ -1620,18 +1684,10 @@ func clear_popup_runtime_links(popup: Dictionary) -> void:
 		popup.infectionSourceId = 0
 
 func is_popup_locked(popup: Dictionary) -> bool:
-	if popup.def.type == "first_purchase_package" or popup.def.type == "stock_broker_app":
-		return true
-	if popup.def.type == "interest_offer" and popup.get("interestAccepted", false) and not popup.get("interestMatured", false):
-		return true
-	if popup.def.type == "recurring_investment" and popup.has("investment") and popup.investment.get("accepted", false) and not popup.investment.get("matured", false):
-		return true
-	if popup.def.type == "stock_market" and popup.has("stock") and popup.stock.get("invested", false):
-		return true
-	return popup.get("locked", false) or popup.get("inputGrace", 0.0) > 0.0
+	return not [PopupClosePolicyScript.NORMAL, PopupClosePolicyScript.AUTO_CLOSE].has(PopupClosePolicyScript.policy_for(popup))
 
 func is_emergency_closable_popup(popup: Dictionary) -> bool:
-	return not is_popup_locked(popup)
+	return [PopupClosePolicyScript.NORMAL, PopupClosePolicyScript.AUTO_CLOSE].has(PopupClosePolicyScript.policy_for(popup))
 
 func emergency_close_oldest_popup() -> void:
 	if state.gameOver or is_selecting() or state.stats.emergencyCloseDisabled > 0 or state.emergencyTimer > 0.0 or state.openPopups.is_empty():
@@ -2362,7 +2418,7 @@ func open_first_purchase_package_selection() -> void:
 		var copy = package.duplicate(true)
 		copy.description = "%s\n%s\n%s\n%s" % [package.get("efficiencyLabel", ""), package.get("theme", ""), package.get("description", ""), benefits]
 		choices.append(copy)
-	hud.show_choices("스타터 계약 패키지 선택", "결제 완료. 한정 스타터 계약 1개를 선택해 이번 런의 성장 효율을 확정하세요.", choices, func(choice): apply_first_purchase_package_choice(choice), 2)
+	hud.show_choices("스타터 계약 패키지 선택", "결제 완료. 한정 스타터 계약 1개를 선택해 이번 런의 성장 효율을 확정하세요.", choices, func(choice): apply_first_purchase_package_choice(choice), 2, 1.7)
 
 func apply_first_purchase_package(_id: int, package: Dictionary) -> void:
 	apply_first_purchase_package_choice(package)

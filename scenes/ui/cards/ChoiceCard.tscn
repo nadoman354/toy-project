@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[node name="ChoiceCard" type="Button"]
+custom_minimum_size = Vector2(204, 112)
+text = ""
+autowrap_mode = 0

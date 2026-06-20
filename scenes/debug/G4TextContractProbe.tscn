@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/debug/g4_text_contract_probe.gd" id="1_g4_probe"]
+
+[node name="G4TextContractProbe" type="Node"]
+script = ExtResource("1_g4_probe")

@@ -1777,5 +1777,3 @@ func format_time(seconds: float) -> String:
 	var minutes = int(seconds / 60.0)
 	var rest = int(seconds) % 60
 	return "%d:%02d" % [minutes, rest]
-
-

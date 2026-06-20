@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://nx1o1bee0hjf"]
+
+[ext_resource type="Script" uid="uid://bh8gtobhmeevo" path="res://scripts/v2/prototype_game.gd" id="1_game"]
+[ext_resource type="PackedScene" path="res://scenes/layers/WorldLayer.tscn" id="2_world"]
+[ext_resource type="PackedScene" path="res://scenes/layers/EntityLayer.tscn" id="3_entities"]
+[ext_resource type="PackedScene" path="res://scenes/layers/VfxLayer.tscn" id="4_vfx"]
+[ext_resource type="PackedScene" path="res://scenes/layers/HudLayer.tscn" id="5_hud"]
+[ext_resource type="PackedScene" path="res://scenes/layers/PopupLayer.tscn" id="6_popup"]
+[ext_resource type="PackedScene" path="res://scenes/layers/ModalLayer.tscn" id="7_modal"]
+[ext_resource type="PackedScene" path="res://scenes/layers/DebugLayer.tscn" id="8_debug"]
+
+[node name="GameRoot" type="Node" unique_id=575072233]
+script = ExtResource("1_game")
+
+[node name="WorldLayer" parent="." unique_id=278430876 instance=ExtResource("2_world")]
+
+[node name="EntityLayer" parent="." unique_id=1387759323 instance=ExtResource("3_entities")]
+
+[node name="VfxLayer" parent="." unique_id=638890401 instance=ExtResource("4_vfx")]
+
+[node name="HudLayer" parent="." unique_id=542490655 instance=ExtResource("5_hud")]
+
+[node name="PopupLayer" parent="." unique_id=2048661224 instance=ExtResource("6_popup")]
+
+[node name="ModalLayer" parent="." unique_id=725578190 instance=ExtResource("7_modal")]
+
+[node name="DebugLayer" parent="." unique_id=1637802781 instance=ExtResource("8_debug")]
