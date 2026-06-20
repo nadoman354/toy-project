@@ -15,4 +15,3 @@ func setup(_game_root) -> void:
 
 func debug_parent() -> Control:
 	return root
-

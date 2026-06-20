@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/modal/prototype_modal_layer.gd" id="1_modal"]
+[ext_resource type="PackedScene" path="res://scenes/ui/modal/ChoiceOverlay.tscn" id="2_choice"]
 
 [node name="ModalLayer" type="CanvasLayer"]
 layer = 50
@@ -14,3 +15,52 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="itemOverlay" parent="ModalRoot" instance=ExtResource("2_choice")]
+visible = false
+
+[node name="gameOverOverlay" type="ColorRect" parent="ModalRoot"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.72)
+
+[node name="gameOverPanel" type="PanelContainer" parent="ModalRoot/gameOverOverlay"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -230.0
+offset_top = -120.0
+offset_right = 230.0
+offset_bottom = 120.0
+mouse_filter = 2
+
+[node name="GameOverBox" type="VBoxContainer" parent="ModalRoot/gameOverOverlay/gameOverPanel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="gameOverTitle" type="Label" parent="ModalRoot/gameOverOverlay/gameOverPanel/GameOverBox"]
+layout_mode = 2
+mouse_filter = 2
+horizontal_alignment = 1
+text = "게임 오버"
+
+[node name="gameOverSummary" type="RichTextLabel" parent="ModalRoot/gameOverOverlay/gameOverPanel/GameOverBox"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+mouse_filter = 2
+bbcode_enabled = true
+fit_content = false
+scroll_active = false
+
+[node name="restartButton" type="Button" parent="ModalRoot/gameOverOverlay/gameOverPanel/GameOverBox"]
+layout_mode = 2
+text = "재시작"

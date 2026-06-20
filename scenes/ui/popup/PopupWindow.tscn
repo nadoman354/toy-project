@@ -2,4 +2,115 @@
 
 [node name="PopupWindow" type="PanelContainer"]
 mouse_filter = 0
+clip_contents = true
 
+[node name="PopupBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+clip_contents = true
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 0
+
+[node name="TitleFrame" type="PanelContainer" parent="PopupBox"]
+layout_mode = 2
+mouse_filter = 0
+clip_contents = true
+size_flags_horizontal = 3
+
+[node name="TitleBar" type="HBoxContainer" parent="PopupBox/TitleFrame"]
+layout_mode = 2
+mouse_filter = 0
+clip_contents = true
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="TitleLabel" type="Label" parent="PopupBox/TitleFrame/TitleBar"]
+layout_mode = 2
+mouse_filter = 2
+size_flags_horizontal = 3
+text = "팝업 제목"
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="MinimizeButton" type="Button" parent="PopupBox/TitleFrame/TitleBar"]
+custom_minimum_size = Vector2(22, 20)
+layout_mode = 2
+text = "_"
+
+[node name="CloseButton" type="Button" parent="PopupBox/TitleFrame/TitleBar"]
+custom_minimum_size = Vector2(22, 20)
+layout_mode = 2
+text = "X"
+
+[node name="ContentFrame" type="PanelContainer" parent="PopupBox"]
+layout_mode = 2
+mouse_filter = 2
+clip_contents = true
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ContentBox" type="VBoxContainer" parent="PopupBox/ContentFrame"]
+layout_mode = 2
+mouse_filter = 2
+clip_contents = true
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="BodyText" type="RichTextLabel" parent="PopupBox/ContentFrame/ContentBox"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+mouse_filter = 2
+clip_contents = true
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = false
+scroll_active = true
+text = "본문 텍스트 슬롯"
+
+[node name="DetailText" type="RichTextLabel" parent="PopupBox/ContentFrame/ContentBox"]
+visible = false
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+mouse_filter = 2
+clip_contents = true
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = false
+scroll_active = false
+text = "세부 정보 슬롯"
+
+[node name="StatusBadgeRow" type="HFlowContainer" parent="PopupBox/ContentFrame/ContentBox"]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+clip_contents = true
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 3
+
+[node name="ProgressBar" type="ProgressBar" parent="PopupBox/ContentFrame/ContentBox"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+mouse_filter = 2
+clip_contents = true
+size_flags_horizontal = 3
+show_percentage = false
+value = 35.0
+
+[node name="ChartArea" type="Control" parent="PopupBox/ContentFrame/ContentBox"]
+visible = false
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+mouse_filter = 2
+clip_contents = true
+size_flags_horizontal = 3
+
+[node name="ButtonRow" type="HFlowContainer" parent="PopupBox/ContentFrame/ContentBox"]
+layout_mode = 2
+mouse_filter = 2
+clip_contents = true
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4

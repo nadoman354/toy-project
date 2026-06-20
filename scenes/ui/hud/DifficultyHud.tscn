@@ -1,0 +1,29 @@
+[gd_scene format=3]
+
+[node name="difficultyHud" type="PanelContainer"]
+custom_minimum_size = Vector2(340, 68)
+offset_right = 340.0
+offset_bottom = 68.0
+mouse_filter = 2
+
+[node name="EditorPreview" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="EditorPreview"]
+layout_mode = 2
+mouse_filter = 2
+text = "난이도 HUD"
+
+[node name="BarSlot" type="ProgressBar" parent="EditorPreview"]
+custom_minimum_size = Vector2(0, 7)
+layout_mode = 2
+mouse_filter = 2
+show_percentage = false
+value = 45.0
+
+[node name="MetaPreview" type="Label" parent="EditorPreview"]
+layout_mode = 2
+mouse_filter = 2
+text = "선택 난이도 / 팝업 압박"

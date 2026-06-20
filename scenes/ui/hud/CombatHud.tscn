@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[node name="combatHud" type="PanelContainer"]
+custom_minimum_size = Vector2(270, 274)
+offset_right = 270.0
+offset_bottom = 274.0
+mouse_filter = 2
+
+[node name="EditorPreview" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="EditorPreview"]
+layout_mode = 2
+mouse_filter = 2
+text = "전투 HUD"
+
+[node name="LevelPreview" type="Label" parent="EditorPreview"]
+layout_mode = 2
+mouse_filter = 2
+text = "Lv / XP / HP / 피해"
+
+[node name="WeaponPreview" type="Label" parent="EditorPreview"]
+layout_mode = 2
+mouse_filter = 2
+text = "공격 모듈과 전투 상태 슬롯"

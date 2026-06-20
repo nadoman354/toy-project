@@ -4,6 +4,14 @@ class_name PrototypeHud
 const ChoiceOverlayScene = preload("res://scenes/ui/modal/ChoiceOverlay.tscn")
 const ChoiceCardScene = preload("res://scenes/ui/cards/ChoiceCard.tscn")
 const HtmlLayoutMetrics = preload("res://scripts/ui/html_layout_metrics.gd")
+const EDITOR_VISIBLE_PANEL_NAMES = [
+	"difficultyHud",
+	"cleanupComboHud",
+	"combatHud",
+	"economyHud",
+	"statusPanel",
+	"debugPanel",
+]
 
 var game = null
 var ui = {}
@@ -382,10 +390,17 @@ func _build_mobile_controls(root: Control) -> void:
 	_apply_mobile_layout(get_viewport().get_visible_rect().size)
 
 func _build_choice_overlay(root: Control) -> void:
-	ui.choiceOverlay = ChoiceOverlayScene.instantiate() as ColorRect
+	var existing = root.get_node_or_null("itemOverlay")
+	if existing == null:
+		existing = root.get_node_or_null("ChoiceOverlay")
+	if existing is ColorRect:
+		ui.choiceOverlay = existing
+	else:
+		ui.choiceOverlay = ChoiceOverlayScene.instantiate() as ColorRect
 	ui.choiceOverlay.name = "itemOverlay"
 	ui.choiceOverlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(ui.choiceOverlay)
+	if ui.choiceOverlay.get_parent() == null:
+		root.add_child(ui.choiceOverlay)
 	var panel = ui.choiceOverlay.get_node("itemPanel") as Panel
 	ui.choicePanel = panel
 	panel.clip_contents = true
@@ -412,31 +427,73 @@ func _build_choice_overlay(root: Control) -> void:
 	ui.choiceGrid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 func _build_game_over(root: Control) -> void:
-	ui.gameOverOverlay = ColorRect.new()
+	var overlay = root.get_node_or_null("gameOverOverlay") as ColorRect
+	if overlay == null:
+		overlay = ColorRect.new()
+		overlay.name = "gameOverOverlay"
+		root.add_child(overlay)
+	ui.gameOverOverlay = overlay
 	ui.gameOverOverlay.name = "gameOverOverlay"
 	ui.gameOverOverlay.color = Color(0, 0, 0, 0.72)
 	ui.gameOverOverlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	ui.gameOverOverlay.visible = false
 	ui.gameOverOverlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(ui.gameOverOverlay)
-	var panel = _panel("gameOverPanel", Vector2(-230, -120), Vector2(460, 240), 0.96)
+	var panel = ui.gameOverOverlay.get_node_or_null("gameOverPanel") as PanelContainer
+	if panel == null:
+		panel = PanelContainer.new()
+		panel.name = "gameOverPanel"
+		ui.gameOverOverlay.add_child(panel)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.offset_left = -230
+	panel.offset_top = -120
+	panel.offset_right = 230
+	panel.offset_bottom = 120
+	panel.add_theme_stylebox_override("panel", _style_box(Color(0.07, 0.10, 0.15, 0.96), Color(1, 1, 1, 0.16), 8, 1, 12))
 	panel.anchor_left = 0.5
 	panel.anchor_right = 0.5
 	panel.anchor_top = 0.5
 	panel.anchor_bottom = 0.5
 	ui.gameOverPanel = panel
-	ui.gameOverOverlay.add_child(panel)
-	var box = _vbox(panel, 12)
-	var title = _title("게임 오버")
+	var box = panel.get_node_or_null("GameOverBox") as VBoxContainer
+	if box == null:
+		box = VBoxContainer.new()
+		box.name = "GameOverBox"
+		panel.add_child(box)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_theme_constant_override("separation", 12)
+	var title = box.get_node_or_null("gameOverTitle") as Label
+	if title == null:
+		title = _title("게임 오버")
+		title.name = "gameOverTitle"
+		box.add_child(title)
+	title.text = "게임 오버"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(title)
-	ui.gameOverSummary = _rich("", 80)
-	box.add_child(ui.gameOverSummary)
-	var restart = Button.new()
+	_set_label_font(title, 15)
+	title.add_theme_color_override("font_color", Color("#edf2f7"))
+	ui.gameOverSummary = box.get_node_or_null("gameOverSummary") as RichTextLabel
+	if ui.gameOverSummary == null:
+		ui.gameOverSummary = _rich("", 80)
+		ui.gameOverSummary.name = "gameOverSummary"
+		box.add_child(ui.gameOverSummary)
+	ui.gameOverSummary.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.gameOverSummary.bbcode_enabled = true
+	ui.gameOverSummary.custom_minimum_size = Vector2(0, 80)
+	ui.gameOverSummary.fit_content = false
+	ui.gameOverSummary.scroll_active = false
+	var restart = box.get_node_or_null("restartButton") as Button
+	if restart == null:
+		restart = Button.new()
+		restart.name = "restartButton"
+		box.add_child(restart)
 	restart.text = "재시작"
 	_style_button(restart, "blue")
-	restart.pressed.connect(func(): game.reset_game())
-	box.add_child(restart)
+	var restart_callback = Callable(self, "_on_game_over_restart_pressed")
+	if not restart.pressed.is_connected(restart_callback):
+		restart.pressed.connect(restart_callback)
+
+func _on_game_over_restart_pressed() -> void:
+	if game != null:
+		game.reset_game()
 
 func _ensure_choice_scroll_inset() -> void:
 	if not ui.has("choiceScroll") or not ui.has("choiceGrid"):
@@ -599,7 +656,13 @@ func _debug_minimized() -> bool:
 	return ui.has("debugBody") and not ui.debugBody.visible
 
 func _panel(name: String, pos: Vector2, size: Vector2, alpha: float, margin := 12, dashed := false) -> PanelContainer:
-	var panel = PanelContainer.new()
+	var panel = _take_scene_panel(name)
+	if panel == null:
+		panel = PanelContainer.new()
+		if EDITOR_VISIBLE_PANEL_NAMES.has(name):
+			push_warning("G13 editor-visible panel scene node missing; creating fallback: %s" % name)
+	else:
+		_clear_container(panel)
 	panel.name = name
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.offset_left = pos.x
@@ -617,6 +680,15 @@ func _panel(name: String, pos: Vector2, size: Vector2, alpha: float, margin := 1
 	style.set_content_margin_all(margin)
 	panel.add_theme_stylebox_override("panel", style)
 	return panel
+
+func _take_scene_panel(name: String) -> PanelContainer:
+	var found = _find_node_named(self, name)
+	if not (found is PanelContainer):
+		return null
+	var parent = found.get_parent()
+	if parent != null:
+		parent.remove_child(found)
+	return found as PanelContainer
 
 func _vbox(parent: Node, separation: int) -> VBoxContainer:
 	var box = VBoxContainer.new()
@@ -1124,18 +1196,7 @@ func _choice_card_button(choice: Dictionary, selected: bool, disabled: bool, cal
 	button.disabled = disabled
 	_style_button(button, _choice_button_variant(choice, selected))
 	button.pressed.connect(func(c = choice): callback.call(c))
-	var box = VBoxContainer.new()
-	box.name = "choiceCardBody"
-	box.set_anchors_preset(Control.PRESET_FULL_RECT)
-	box.offset_left = 10
-	box.offset_top = 10
-	box.offset_right = -10
-	box.offset_bottom = -10
-	box.add_theme_constant_override("separation", int(HtmlLayoutMetrics.choice_inner_gap(HtmlLayoutMetrics.viewport_size(get_viewport()))))
-	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	box.custom_minimum_size = Vector2(max(1.0, button.custom_minimum_size.x - 20.0), 0)
-	box.clip_contents = true
-	button.add_child(box)
+	var box = _prepare_choice_card_body(button)
 	if selected:
 		box.add_child(_choice_badge("선택됨", Color(0.28, 0.84, 0.59, 0.16), Color(0.28, 0.84, 0.59, 0.52), Color("#dfffee"), "selectedBadge"))
 	if choice.has("rarity"):
@@ -1144,6 +1205,27 @@ func _choice_card_button(choice: Dictionary, selected: bool, disabled: bool, cal
 		_build_module_choice_card(box, choice)
 	_make_mouse_transparent(box)
 	return button
+
+func _prepare_choice_card_body(button: Button) -> VBoxContainer:
+	var box = button.get_node_or_null("choiceCardBody") as VBoxContainer
+	if box == null:
+		push_warning("G13 ChoiceCard scene missing choiceCardBody; creating fallback body.")
+		box = VBoxContainer.new()
+		box.name = "choiceCardBody"
+		button.add_child(box)
+	else:
+		_clear_container(box)
+	box.set_anchors_preset(Control.PRESET_FULL_RECT)
+	box.offset_left = 10
+	box.offset_top = 10
+	box.offset_right = -10
+	box.offset_bottom = -10
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_theme_constant_override("separation", int(HtmlLayoutMetrics.choice_inner_gap(HtmlLayoutMetrics.viewport_size(get_viewport()))))
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.custom_minimum_size = Vector2(max(1.0, button.custom_minimum_size.x - 20.0), 0)
+	box.clip_contents = true
+	return box
 
 func _build_item_choice_card(box: VBoxContainer, choice: Dictionary) -> void:
 	var viewport_size = HtmlLayoutMetrics.viewport_size(get_viewport())

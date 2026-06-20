@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[node name="debugPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(250, 164)
+offset_right = 250.0
+offset_bottom = 164.0
+mouse_filter = 1
+
+[node name="EditorPreview" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="EditorPreview"]
+layout_mode = 2
+mouse_filter = 2
+text = "디버그 패널"
+
+[node name="ButtonsPreview" type="Label" parent="EditorPreview"]
+layout_mode = 2
+mouse_filter = 2
+text = "디버그 버튼 / 수치 조정 슬롯"
+
+[node name="OutputPreview" type="Label" parent="EditorPreview"]
+layout_mode = 2
+mouse_filter = 2
+text = "런타임 진단 출력"

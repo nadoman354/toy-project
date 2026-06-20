@@ -66,14 +66,13 @@ func _create_popup_window(popup: Dictionary) -> void:
 	panel.add_theme_stylebox_override("panel", style)
 	root.add_child(panel)
 	panel.gui_input.connect(func(event, id = popup.id, p = panel): _panel_event(event, id, p))
-	var box = VBoxContainer.new()
+	var box = panel.get_node("PopupBox") as VBoxContainer
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.clip_contents = true
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_theme_constant_override("separation", 0)
-	panel.add_child(box)
-	var title_frame = PanelContainer.new()
+	var title_frame = panel.get_node("PopupBox/TitleFrame") as PanelContainer
 	title_frame.mouse_filter = Control.MOUSE_FILTER_STOP
 	title_frame.clip_contents = true
 	title_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -83,14 +82,12 @@ func _create_popup_window(popup: Dictionary) -> void:
 	title_style.corner_radius_top_right = 6
 	title_style.set_content_margin_all(2)
 	title_frame.add_theme_stylebox_override("panel", title_style)
-	box.add_child(title_frame)
-	var title_bar = HBoxContainer.new()
+	var title_bar = panel.get_node("PopupBox/TitleFrame/TitleBar") as HBoxContainer
 	title_bar.mouse_filter = Control.MOUSE_FILTER_STOP
 	title_bar.clip_contents = true
 	title_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_bar.add_theme_constant_override("separation", 4)
-	title_frame.add_child(title_bar)
-	var title = Label.new()
+	var title = panel.get_node("PopupBox/TitleFrame/TitleBar/TitleLabel") as Label
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.autowrap_mode = TextServer.AUTOWRAP_OFF
@@ -98,22 +95,25 @@ func _create_popup_window(popup: Dictionary) -> void:
 	title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	title.add_theme_font_size_override("font_size", 13)
 	title.add_theme_color_override("font_color", Color.WHITE)
-	title_bar.add_child(title)
+	var min_button = panel.get_node_or_null("PopupBox/TitleFrame/TitleBar/MinimizeButton") as Button
 	if popup.def.type == "stock_broker_app":
-		var min_button = Button.new()
-		min_button.text = "_"
-		min_button.custom_minimum_size = Vector2(22, 20)
-		_style_title_button(min_button)
-		min_button.pressed.connect(func(id = popup.id): game.toggle_popup_minimized(id))
-		title_bar.add_child(min_button)
+		if min_button != null:
+			min_button.text = "_"
+			min_button.custom_minimum_size = Vector2(22, 20)
+			_style_title_button(min_button)
+			min_button.pressed.connect(func(id = popup.id): game.toggle_popup_minimized(id))
+	else:
+		_remove_template_node(min_button)
+	var close = panel.get_node_or_null("PopupBox/TitleFrame/TitleBar/CloseButton") as Button
 	if not ["first_purchase_package", "stock_broker_app"].has(popup.def.type):
-		var close = Button.new()
-		close.text = "X"
-		close.custom_minimum_size = Vector2(22, 20)
-		_style_title_button(close)
-		close.pressed.connect(func(id = popup.id): game.request_close_popup(id, {"reason": "button"}))
-		title_bar.add_child(close)
-	var content_frame = PanelContainer.new()
+		if close != null:
+			close.text = "X"
+			close.custom_minimum_size = Vector2(22, 20)
+			_style_title_button(close)
+			close.pressed.connect(func(id = popup.id): game.request_close_popup(id, {"reason": "button"}))
+	else:
+		_remove_template_node(close)
+	var content_frame = panel.get_node("PopupBox/ContentFrame") as PanelContainer
 	content_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content_frame.clip_contents = true
 	content_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -122,15 +122,13 @@ func _create_popup_window(popup: Dictionary) -> void:
 	content_style.bg_color = Color(0, 0, 0, 0)
 	content_style.set_content_margin_all(3)
 	content_frame.add_theme_stylebox_override("panel", content_style)
-	box.add_child(content_frame)
-	var content_box = VBoxContainer.new()
+	var content_box = panel.get_node("PopupBox/ContentFrame/ContentBox") as VBoxContainer
 	content_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content_box.clip_contents = true
 	content_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content_box.add_theme_constant_override("separation", 4)
-	content_frame.add_child(content_box)
-	var body = RichTextLabel.new()
+	var body = panel.get_node("PopupBox/ContentFrame/ContentBox/BodyText") as RichTextLabel
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.clip_contents = true
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -141,8 +139,7 @@ func _create_popup_window(popup: Dictionary) -> void:
 	body.scroll_active = true
 	body.add_theme_font_size_override("normal_font_size", 13)
 	body.add_theme_color_override("default_color", _popup_text_color(popup.def.type))
-	content_box.add_child(body)
-	var detail = RichTextLabel.new()
+	var detail = panel.get_node("PopupBox/ContentFrame/ContentBox/DetailText") as RichTextLabel
 	detail.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	detail.clip_contents = true
 	detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -155,16 +152,14 @@ func _create_popup_window(popup: Dictionary) -> void:
 	detail.add_theme_font_size_override("normal_font_size", 12)
 	detail.add_theme_color_override("default_color", _popup_text_color(popup.def.type))
 	detail.add_theme_stylebox_override("normal", _style_box(Color(1, 1, 1, 0.48), Color(0, 0, 0, 0.10), 6, 1, 2))
-	content_box.add_child(detail)
-	var status_badges = HFlowContainer.new()
+	var status_badges = panel.get_node("PopupBox/ContentFrame/ContentBox/StatusBadgeRow") as HFlowContainer
 	status_badges.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	status_badges.clip_contents = true
 	status_badges.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	status_badges.add_theme_constant_override("h_separation", 4)
 	status_badges.add_theme_constant_override("v_separation", 3)
 	status_badges.visible = false
-	content_box.add_child(status_badges)
-	var progress = ProgressBar.new()
+	var progress = panel.get_node("PopupBox/ContentFrame/ContentBox/ProgressBar") as ProgressBar
 	progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	progress.clip_contents = true
 	progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -176,22 +171,19 @@ func _create_popup_window(popup: Dictionary) -> void:
 	var progress_fill = StyleBoxFlat.new()
 	progress_fill.bg_color = _popup_title_color(popup.def.type)
 	progress.add_theme_stylebox_override("fill", progress_fill)
-	content_box.add_child(progress)
-	var chart = Control.new()
+	var chart = panel.get_node("PopupBox/ContentFrame/ContentBox/ChartArea") as Control
 	chart.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	chart.clip_contents = true
 	chart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	chart.custom_minimum_size = Vector2(0, 54)
 	chart.visible = false
-	content_box.add_child(chart)
 	chart.draw.connect(func(): _draw_stock_chart(chart, popup.id))
-	var controls = HFlowContainer.new()
+	var controls = panel.get_node("PopupBox/ContentFrame/ContentBox/ButtonRow") as HFlowContainer
 	controls.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	controls.clip_contents = true
 	controls.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	controls.add_theme_constant_override("h_separation", 4)
 	controls.add_theme_constant_override("v_separation", 4)
-	content_box.add_child(controls)
 	title_bar.gui_input.connect(func(event, id = popup.id, p = panel): _drag_event(event, id, p))
 	windows[popup.id] = {
 		"panel": panel,
@@ -212,6 +204,14 @@ func _create_popup_window(popup: Dictionary) -> void:
 		"dragOriginPosition": popup.position,
 		"controlsSignature": "",
 	}
+
+func _remove_template_node(node: Node) -> void:
+	if node == null:
+		return
+	var parent = node.get_parent()
+	if parent != null:
+		parent.remove_child(node)
+	node.queue_free()
 
 func _update_popup_window(popup: Dictionary) -> void:
 	var record = windows.get(int(popup.id), null)

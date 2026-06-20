@@ -1,6 +1,5 @@
 [gd_scene load_steps=2 format=3 uid="uid://popup_roguelike_main"]
 
-[ext_resource type="Script" path="res://scripts/v2/prototype_game.gd" id="1_game_root"]
+[ext_resource type="PackedScene" path="res://scenes/main/Main.tscn" id="1_structured_main"]
 
-[node name="GameRoot" type="Node"]
-script = ExtResource("1_game_root")
+[node name="GameRoot" instance=ExtResource("1_structured_main")]

@@ -489,3 +489,158 @@ Verification:
   - CLI smoke passed with `has_primary_module=true`, `first_purchase_paid=true`, `boss_package_two_pick_flow_exercised=true`, `all_popup_definitions_createable=true`, `all_items_apply_without_error=true`, `has_hud=true`, `has_popup_layer=true`, and `kill_count=4`.
 Rollback notes:
 - Revert checklist documentation/probe additions only.
+
+## G12. Active runtime path verification
+
+Status: [x]
+Category: Runtime activation / integration
+Priority: P0
+Depends on: G11
+Scope:
+- Verify that the actual Godot launch path uses the completed G0-G11 structured scene/layer architecture.
+- Remove stale-main-scene ambiguity without adding gameplay or UI features.
+Do:
+- Inspect `project.godot`, both main scenes, layer scenes, active v2 scripts, parity docs, and G1-G11 probes.
+- Verify active launch scene, layer binding, duplicate layer absence, CanvasLayer order, input root policy, and `HtmlLayoutMetrics` activation.
+- Rerun G1-G9 probes, scene smoke, CLI smoke, and a G12 runtime path probe.
+Do not:
+- Rewrite the project.
+- Rebalance gameplay.
+- Refactor unrelated systems.
+- Move into G13 implementation.
+Likely files:
+- `project.godot`
+- `scenes/main.tscn`
+- `scenes/main/Main.tscn`
+- `scenes/layers/*.tscn`
+- `scripts/v2/prototype_game.gd`
+- `scripts/ui/html_layout_metrics.gd`
+- `scripts/v2/prototype_hud.gd`
+- `scripts/v2/prototype_popup_layer.gd`
+- `scripts/ui/modal/prototype_modal_layer.gd`
+- `scripts/debug/prototype_debug_layer.gd`
+- `scripts/debug/g12_runtime_path_probe.gd`
+- `scenes/debug/G12RuntimePathProbe.tscn`
+- `Docs/Reports/PostG11RuntimePathAudit.md`
+Acceptance criteria:
+- Active project launch scene uses the structured scene/layer architecture.
+- No stale `main.tscn` masks G0-G11 work.
+- Major layers resolve once and use expected scripts.
+- G1-G11 probes are rerun or clearly marked blocked with reason.
+- Remaining gaps are documented as new goals, not silently ignored.
+Verification:
+- `project.godot` inspected: active launch scene is `res://scenes/main/Main.tscn`.
+- `scenes/main.tscn` was stale before G12 and now delegates to `res://scenes/main/Main.tscn`.
+- Runtime path probe added and run:
+  `C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe --headless --path . --log-file tmp\g12_runtime_path_probe.log --scene res://scenes/debug/G12RuntimePathProbe.tscn`
+- Result: `g12_runtime_path_probe passed`.
+- Probe verifies active and legacy-delegate scene paths, exactly one `WorldLayer`, `EntityLayer`, `VfxLayer`, `HudLayer`, `PopupLayer`, `ModalLayer`, and `DebugLayer`, expected scripts on major scripted layers, `PrototypeGame` bindings to existing nodes, CanvasLayer order `HUD 10 < Popup 20 < Debug 40 < Modal 50`, input root pass-through, and active `HtmlLayoutMetrics` usage by HUD/choice/popup code.
+- G1-G9 probe scenes rerun: all passed.
+- Scene smoke rerun: passed.
+- CLI smoke rerun: passed with `has_primary_module=true`, `first_purchase_paid=true`, `boss_package_two_pick_flow_exercised=true`, `all_popup_definitions_createable=true`, `all_items_apply_without_error=true`, `has_hud=true`, `has_popup_layer=true`, and `kill_count=4`.
+- Runtime audit report: `Docs/Reports/PostG11RuntimePathAudit.md`.
+Rollback notes:
+- Revert `scenes/main.tscn` delegate change and G12 probe/report additions only.
+
+## G13. Editor-visible UI scene materialization
+
+Status: [x]
+Category: Editor visibility / UI scene architecture
+Priority: P0
+Depends on: G12
+Scope:
+- Convert the most important runtime-generated UI shells into editor-visible `.tscn` templates.
+- Preserve current runtime behavior, `HtmlLayoutMetrics` layout authority, and G1-G12 verification results.
+- Keep dynamic content runtime-driven while making reusable shell/layout structures visible in the Godot editor.
+Context:
+- This goal was requested as the next "G12", but `G12. Active runtime path verification` already exists and is verified. This item is numbered G13 to avoid duplicate goal IDs.
+- Current runtime passes probes, but the UI remains difficult to inspect and maintain visually because many panel/card/popup structures are constructed in script.
+Do:
+- Identify runtime-generated visual UI structures that should become `.tscn` templates.
+- Create or expand editor-visible scene templates for HUD panels, choice/card shells, popup windows, and modal/game-over shells.
+- Refactor scripts so they bind to existing named nodes via `get_node()`, unique names, or exported `NodePath`s instead of constructing the entire visual tree.
+- Keep fallback creation only for missing scene nodes, with a clear warning, and prevent duplicate runtime panels.
+- Keep item choices, popup-specific buttons, dynamic texts, stock chart data, item tags, and generated card contents runtime-driven.
+- Continue using `HtmlLayoutMetrics` for runtime layout and sizing.
+Do not:
+- Rewrite the whole game.
+- Change gameplay balance.
+- Delete existing data.
+- Replace working layout metrics.
+- Create a second parallel active UI system.
+- Leave both code-created and scene-created duplicate HUD/modal/popup shells active at runtime.
+- Leave `prototype_hud.gd` building an entire second HUD after `HudLayer.tscn` owns visible panel instances.
+- Mark this goal complete without runtime verification and duplicate-node checks.
+Target scenes:
+- `scenes/layers/HudLayer.tscn`
+- `scenes/ui/hud/CombatHud.tscn`
+- `scenes/ui/hud/EconomyHud.tscn`
+- `scenes/ui/hud/DifficultyHud.tscn`
+- `scenes/ui/hud/CleanupComboHud.tscn`
+- `scenes/ui/hud/StatusPanel.tscn`
+- `scenes/ui/hud/DebugPanel.tscn`
+- `scenes/layers/ModalLayer.tscn`
+- `scenes/ui/modal/ChoiceOverlay.tscn`
+- `scenes/ui/cards/ChoiceCard.tscn`
+- Optional: `scenes/ui/cards/InventoryCard.tscn`
+- Optional: `scenes/ui/cards/BossPackageChoiceCard.tscn`
+- `scenes/layers/PopupLayer.tscn`
+- `scenes/ui/popup/PopupWindow.tscn`
+Likely files:
+- `scripts/v2/prototype_hud.gd`
+- `scripts/v2/prototype_popup_layer.gd`
+- `scripts/ui/modal/prototype_modal_layer.gd`
+- `scripts/ui/html_layout_metrics.gd`
+- `scripts/debug/g12_editor_visible_scene_probe.gd`
+- `scenes/debug/G12EditorVisibleSceneProbe.tscn`
+Implementation strategy:
+- Inspect current `.tscn` layer/UI scenes and scripts before editing.
+- Identify nodes currently created by `PrototypeHud._build()`, `_build_choice_overlay()`, `_build_game_over()`, and `PrototypePopupLayer._create_popup_window()`.
+- Expand or create `.tscn` templates with stable named nodes and placeholder content.
+- Update scripts to bind existing scene nodes first, create fallback nodes only when missing, and log warnings for fallback paths.
+- Ensure `HudLayer.tscn` visibly instances the HUD shell scenes under `HudRoot`.
+- Ensure `ChoiceOverlay.tscn` contains the visible centered panel, title, description, scroll, grid, and named layout nodes.
+- Ensure `ChoiceCard.tscn` is visually inspectable, with clickable/card root, rarity/tag row, title label, description label, meta label/panel, and selected badge placeholder.
+- Ensure `PopupWindow.tscn` contains a `PanelContainer` root, title bar, title label, close button, minimize button, body text, detail text, status badge row, progress bar, chart area, and controls row.
+- Ensure `PopupLayer` still creates dynamic popup instances at runtime, but from the editor-visible popup shell scene rather than building every visual node in code.
+Acceptance criteria:
+- Opening `scenes/main/Main.tscn` in the Godot editor shows the structured layer nodes.
+- Opening `scenes/layers/HudLayer.tscn` shows visible placeholder HUD panels.
+- Opening `scenes/ui/modal/ChoiceOverlay.tscn` shows the centered modal panel and grid structure.
+- Opening `scenes/ui/cards/ChoiceCard.tscn` shows a readable card layout, not an empty `Button`.
+- Opening `scenes/ui/popup/PopupWindow.tscn` shows the popup shell with title bar, close/minimize slots, body, progress, and controls.
+- At runtime, no duplicate HUD/modal/popup shells are created.
+- Existing layout still follows `HtmlLayoutMetrics`.
+- Existing input behavior still works.
+- Dynamic generated content remains runtime-driven.
+- G1, G3, G4, G5, G6, G7, and G9 probes pass after implementation.
+Verification:
+- Run existing probes after implementation:
+  - G1 input probe.
+  - G3 layout service probe.
+  - G4 text contract probe.
+  - G5 HUD probe.
+  - G6 choice/modal probe.
+  - G7 popup probe.
+  - G9 core loop probe.
+- Add a goal-specific probe if useful:
+  - `scenes/debug/G12EditorVisibleSceneProbe.tscn`
+  - `scripts/debug/g12_editor_visible_scene_probe.gd`
+- The new probe should verify:
+  - required scene files exist.
+  - required named nodes exist.
+  - scripts bind to scene nodes without duplicating fallback-created nodes.
+  - `HudLayer` has visible child panel instances.
+  - `PopupWindow` can instantiate and receive runtime popup data.
+  - `ChoiceCard` can instantiate and bind item/module data.
+- Implemented and run:
+  `C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe --headless --path . --log-file tmp\g12_editor_visible_scene_probe.log --scene res://scenes/debug/G12EditorVisibleSceneProbe.tscn`
+- Result: `g12_editor_visible_scene_probe passed`.
+- The G13 probe verifies required scene files and named nodes, `HudLayer` visible child panel instances, exactly one runtime HUD/modal shell node per major UI shell in the active `Main.tscn` path, `PrototypeHud.ui` bindings to those nodes, cleared editor preview placeholders at runtime, `ChoiceCard` data binding through `show_choices()`, and `PopupWindow` template binding through `create_popup()` plus `PopupLayer.sync()`.
+- Required existing probes rerun with Godot 4.7: G1 input, G3 layout service, G4 text contract, G5 HUD, G6 choice/modal, G7 popup, and G9 core loop all passed.
+- G1's direct script setup path emitted expected fallback warnings because that probe does not instantiate `HudLayer.tscn`; the active `Main.tscn` runtime path was separately verified to bind scene-owned nodes without duplicate HUD/modal/popup shells.
+- G12 runtime path probe rerun after G13 and passed:
+  `C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe --headless --path . --log-file tmp\g12_runtime_path_probe_g13.log --scene res://scenes/debug/G12RuntimePathProbe.tscn`
+Rollback notes:
+- Revert scene-template and binding-script changes together.
+- If duplicate UI appears, revert the affected template binding path first; do not remove data or gameplay code.

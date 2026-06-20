@@ -34,6 +34,7 @@ Use `--log-file tmp\<name>.log` for every headless run. Godot print output is mo
 | G7 popup | Popup size table, clamp, click-to-front, drag release anywhere, close/minimize/forced close policies | `& 'C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe' --headless --path . --log-file tmp\g7_popup_probe.log --scene res://scenes/debug/G7PopupProbe.tscn` | `g7_popup_probe passed` |
 | G8 progression | Primary/secondary/module/form/mechanic gates, default advanced gate, automatic mastery, level-up pause behavior | `& 'C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe' --headless --path . --log-file tmp\g8_progression_probe.log --scene res://scenes/debug/G8ProgressionProbe.tscn` | `g8_progression_probe passed` |
 | G9 core loop | Player/layers, enemy spawn/chase, auto attack, kill/drop, pickup attraction/collection, HUD update, item machine, popup, boss package | `& 'C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe' --headless --path . --log-file tmp\g9_core_loop_probe.log --scene res://scenes/debug/G9CoreLoopProbe.tscn` | `g9_core_loop_probe passed` |
+| G12 runtime path | Active `project.godot` main scene, legacy main delegate, structured layers, duplicate layer absence, layer scripts, CanvasLayer order, LayoutService activation | `& 'C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe' --headless --path . --log-file tmp\g12_runtime_path_probe.log --scene res://scenes/debug/G12RuntimePathProbe.tscn` | `g12_runtime_path_probe passed` |
 | Scene smoke | Basic integrated runtime scenario through `scenes/prototype_smoke_test.tscn` | `& 'C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe' --headless --path . --log-file tmp\prototype_smoke_test.log --scene res://scenes/prototype_smoke_test.tscn` | exit code `0`, result JSON exists, `has_primary_module=true`, `first_purchase_paid=true`, `has_hud=true`, `has_popup_layer=true` |
 | CLI smoke | Extended popup/economy/combat/item/security/stock/boss package scenario through `prototype_smoke_cli.gd` | `& 'C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe' --headless --path . --log-file tmp\prototype_smoke_cli.log --script scripts/v2/prototype_smoke_cli.gd` | result JSON exists and key booleans are true |
 
@@ -68,7 +69,7 @@ Minimum CLI smoke fields to check:
 
 | Change area | Required checks |
 | --- | --- |
-| Project launch, scene wiring, root layers | G2, scene smoke |
+| Project launch, scene wiring, root layers | G12, G2, scene smoke |
 | Button/input, overlays, mouse filtering, CanvasLayer order | G1, G6, G7 when popups are touched |
 | Viewport, full-screen roots, world fill | G2, G5 |
 | Layout constants or `HtmlLayoutMetrics` | G3, plus G5/G6/G7 for the affected UI |
@@ -182,5 +183,6 @@ Manual fallback:
 G11 dry-run executed with Godot 4.7:
 
 - G1 through G9 scene probes: all passed.
+- G12 runtime path probe: passed.
 - Scene smoke: passed.
 - CLI smoke: passed with `has_primary_module=true`, `first_purchase_paid=true`, `boss_package_two_pick_flow_exercised=true`, `all_popup_definitions_createable=true`, `all_items_apply_without_error=true`, `has_hud=true`, `has_popup_layer=true`, and `kill_count=4`.

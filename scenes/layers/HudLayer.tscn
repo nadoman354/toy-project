@@ -1,6 +1,12 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/v2/prototype_hud.gd" id="1_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud/CombatHud.tscn" id="2_combat"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud/EconomyHud.tscn" id="3_economy"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud/DifficultyHud.tscn" id="4_difficulty"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud/CleanupComboHud.tscn" id="5_cleanup"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud/StatusPanel.tscn" id="6_status"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud/DebugPanel.tscn" id="7_debug"]
 
 [node name="HudLayer" type="CanvasLayer"]
 layer = 10
@@ -15,3 +21,56 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
+[node name="difficultyHud" parent="HudRoot" instance=ExtResource("4_difficulty")]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -170.0
+offset_top = 10.0
+offset_right = 170.0
+offset_bottom = 78.0
+
+[node name="cleanupComboHud" parent="HudRoot" instance=ExtResource("5_cleanup")]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -130.0
+offset_top = 64.0
+offset_right = 130.0
+offset_bottom = 122.0
+
+[node name="combatHud" parent="HudRoot" instance=ExtResource("2_combat")]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 282.0
+offset_bottom = 286.0
+
+[node name="economyHud" parent="HudRoot" instance=ExtResource("3_economy")]
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -267.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = 138.0
+
+[node name="statusPanel" parent="HudRoot" instance=ExtResource("6_status")]
+layout_mode = 0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -132.0
+offset_right = 282.0
+offset_bottom = -12.0
+
+[node name="debugPanel" parent="HudRoot" instance=ExtResource("7_debug")]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -262.0
+offset_top = -176.0
+offset_right = -12.0
+offset_bottom = -12.0

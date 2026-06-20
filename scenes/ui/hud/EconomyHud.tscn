@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[node name="economyHud" type="PanelContainer"]
+custom_minimum_size = Vector2(255, 126)
+offset_right = 255.0
+offset_bottom = 126.0
+mouse_filter = 2
+
+[node name="EditorPreview" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="EditorPreview"]
+layout_mode = 2
+mouse_filter = 2
+text = "경제 HUD"
+
+[node name="GoldPreview" type="Label" parent="EditorPreview"]
+layout_mode = 2
+mouse_filter = 2
+text = "골드 / 정리 / 구매 상태"
+
+[node name="MachinePreview" type="Label" parent="EditorPreview"]
+layout_mode = 2
+mouse_filter = 2
+text = "아이템 머신 버튼 슬롯"
