@@ -23,7 +23,7 @@ layout_mode = 2
 mouse_filter = 0
 clip_contents = true
 size_flags_horizontal = 3
-theme_override_constants/separation = 4
+theme_override_constants/separation = 8
 
 [node name="TitleLabel" type="Label" parent="PopupBox/TitleFrame/TitleBar"]
 layout_mode = 2
@@ -34,12 +34,12 @@ clip_text = true
 text_overrun_behavior = 3
 
 [node name="MinimizeButton" type="Button" parent="PopupBox/TitleFrame/TitleBar"]
-custom_minimum_size = Vector2(22, 20)
+custom_minimum_size = Vector2(24, 22)
 layout_mode = 2
 text = "_"
 
 [node name="CloseButton" type="Button" parent="PopupBox/TitleFrame/TitleBar"]
-custom_minimum_size = Vector2(22, 20)
+custom_minimum_size = Vector2(24, 22)
 layout_mode = 2
 text = "X"
 
@@ -66,7 +66,7 @@ clip_contents = true
 size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = false
-scroll_active = true
+scroll_active = false
 text = "본문 텍스트 슬롯"
 
 [node name="DetailText" type="RichTextLabel" parent="PopupBox/ContentFrame/ContentBox"]

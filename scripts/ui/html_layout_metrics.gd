@@ -98,7 +98,7 @@ static func fixed_panel_rule(key: String, viewport_size: Vector2, status_minimiz
 	}
 
 static func fixed_panel_uses_scroll_wrapper(key: String) -> bool:
-	return ["combatHud", "economyHud", "statusPanel"].has(key)
+	return false
 
 static func choice_panel_padding(viewport_size: Vector2) -> int:
 	return 8 if is_compact_viewport(viewport_size) else 18
@@ -276,11 +276,11 @@ static func choice_card_min_height(kind: String, viewport_size: Vector2) -> floa
 	var compact = is_compact_viewport(viewport_size)
 	match kind:
 		"item":
-			return 74.0 if compact else 132.0
+			return 74.0 if compact else 118.0
 		"contract":
-			return 82.0 if compact else 106.0
+			return 76.0 if compact else 96.0
 		"module":
-			return 78.0 if compact else 120.0
+			return 68.0 if compact else 96.0
 		"inventory":
 			return 86.0 if compact else 112.0
 	return 50.0 if compact else 72.0
@@ -340,11 +340,10 @@ static func popup_content_layout(viewport_size: Vector2, popup_type: String, pop
 	var compact = is_compact_viewport(viewport_size)
 	var layout_group = popup_layout_group(popup_type)
 	var title_height = 18.0 if compact else 24.0
-	var margin = 3.0 if compact else 4.0
-	var gap = 3.0 if compact else 4.0
+	var margin = 6.0 if compact else 10.0
+	var gap = 4.0 if compact else 8.0
 	var button_height = 28.0 if compact else 34.0
 	var panel_size = _popup_resolved_size(viewport_size, popup_type, popup_size, compact)
-	var available = max(48.0, panel_size.y - title_height - margin * 2.0)
 	var has_chart = ["stock_broker_app", "stock_market"].has(popup_type)
 	var chart_height = 48.0 if compact else 58.0
 	if not has_chart:
@@ -355,47 +354,47 @@ static func popup_content_layout(viewport_size: Vector2, popup_type: String, pop
 		button_height = 38.0 if compact else 42.0
 	elif popup_type == "sponsored_ad":
 		button_height = 28.0 if compact else 30.0
-	var text_available = max(34.0, available - chart_height - progress_height - controls_hint - gap * 3.0)
-	var detail_height = min(58.0 if compact else 72.0, max(0.0, text_available * 0.38))
-	var body_height = max(34.0, text_available - detail_height)
-	if ["terms", "interest_offer", "recurring_investment", "loan_offer", "security_installer", "boss_package_ad"].has(popup_type):
-		detail_height = max(detail_height, 46.0 if compact else 58.0)
-		body_height = max(34.0, text_available - detail_height)
-	if popup_type == "boss_package_ad":
-		body_height = 64.0 if compact else 76.0
-		detail_height = 92.0 if compact else 124.0
-	elif popup_type == "sponsored_ad":
-		body_height = 38.0 if compact else 44.0
-		detail_height = 48.0 if compact else 58.0
-	var body_scroll = popup_body_scroll_enabled(popup_type)
-	var detail_scroll = popup_detail_scroll_enabled(popup_type)
+	var body_scroll = false
+	var detail_scroll = false
+	var scroll_allowed = _popup_scroll_allowed(popup_type)
 	var text_width = _popup_text_width(panel_size.x, margin, viewport_size)
 	var body_floor = _popup_body_floor(popup_type, compact)
 	var detail_floor = _popup_detail_floor(popup_type, compact)
+	var body_height = body_floor
 	if not body_scroll and body_text.strip_edges() != "":
 		body_height = max(body_floor, _estimated_rich_text_height(body_text, 10 if compact else 13, text_width))
 	var detail_visible = detail_text.strip_edges() != ""
+	var detail_height = 0.0
 	if detail_visible:
+		detail_height = detail_floor
 		if not detail_scroll:
 			detail_height = max(detail_floor, _estimated_rich_text_height(detail_text, 10 if compact else 12, text_width))
-	else:
-		detail_height = 0.0
+	if popup_type == "boss_package_ad":
+		body_height = max(body_height, 64.0 if compact else 76.0)
+		if detail_visible:
+			detail_height = max(detail_height, 92.0 if compact else 124.0)
+	elif popup_type == "sponsored_ad":
+		body_height = max(body_height, 38.0 if compact else 44.0)
+		if detail_visible:
+			detail_height = max(detail_height, 48.0 if compact else 58.0)
 	var required_height = _popup_required_height(popup_type, compact, title_height, margin, gap, body_height, detail_height, chart_height, progress_height, controls_hint, detail_visible, has_status_badges)
-	if required_height > panel_size.y:
-		var overflow = required_height - panel_size.y
+	var max_panel_height = _popup_max_size(viewport_size).y
+	if required_height > max_panel_height:
+		var overflow = required_height - max_panel_height
 		if detail_visible and not detail_scroll:
 			var detail_cut = min(max(0.0, detail_height - detail_floor), overflow)
 			if detail_cut > 0.0:
 				detail_height -= detail_cut
 				overflow -= detail_cut
-				detail_scroll = true
+				detail_scroll = scroll_allowed
 		if not body_scroll:
 			var body_cut = min(max(0.0, body_height - body_floor), overflow)
 			if body_cut > 0.0:
 				body_height -= body_cut
 				overflow -= body_cut
-				body_scroll = true
+				body_scroll = scroll_allowed
 		required_height = _popup_required_height(popup_type, compact, title_height, margin, gap, body_height, detail_height, chart_height, progress_height, controls_hint, detail_visible, has_status_badges)
+	panel_size.y = min(max_panel_height, max(title_height + margin * 2.0 + body_floor + controls_hint, required_height))
 	return {
 		"layout_group": layout_group,
 		"panel_size": panel_size,
@@ -560,9 +559,12 @@ static func popup_layout_group(popup_type: String) -> String:
 	return "standard"
 
 static func popup_detail_scroll_enabled(popup_type: String) -> bool:
-	return popup_type == "terms"
+	return false
 
 static func popup_body_scroll_enabled(popup_type: String) -> bool:
+	return false
+
+static func _popup_scroll_allowed(popup_type: String) -> bool:
 	return popup_type == "terms"
 
 static func popup_size_for_type(type: String) -> Vector2:

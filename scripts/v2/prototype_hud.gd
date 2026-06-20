@@ -132,17 +132,25 @@ func _build() -> void:
 	var economy_box = _vbox(ui.economyHud, 4)
 	var gold_card = PanelContainer.new()
 	gold_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	gold_card.custom_minimum_size = Vector2(0, 40)
+	gold_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	gold_card.add_theme_stylebox_override("panel", _style_box(Color(0.27, 0.20, 0.05, 0.88), Color(0.95, 0.78, 0.29, 0.42), 8, 1, 3))
 	economy_box.add_child(gold_card)
 	var gold_row = HBoxContainer.new()
 	gold_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	gold_row.custom_minimum_size = Vector2(0, 34)
+	gold_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	gold_row.add_theme_constant_override("separation", 6)
 	gold_card.add_child(gold_row)
-	gold_row.add_child(_label("골드", 11, Color("#f6d477"), true))
+	var gold_label = _label("골드", 11, Color("#f6d477"), true)
+	gold_label.custom_minimum_size = Vector2(38, 0)
+	gold_row.add_child(gold_label)
 	var gold_spacer = Control.new()
 	gold_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	gold_row.add_child(gold_spacer)
 	ui.goldText = _label("0G", 22, Color("#ffe7a1"), true)
+	ui.goldText.custom_minimum_size = Vector2(64, 0)
+	ui.goldText.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	gold_row.add_child(ui.goldText)
 	_build_investor_dashboard(economy_box)
 	var item_machine = _hud_card(economy_box)
@@ -166,14 +174,14 @@ func _build() -> void:
 	_style_button(ui.openInventoryButton, "blue")
 	ui.openInventoryButton.pressed.connect(func(): game.open_inventory_overview())
 	economy_box.add_child(ui.openInventoryButton)
-	ui.lastItem = _rich("최근 아이템: 없음", 42)
+	ui.lastItem = _rich("최근 아이템: 없음", 34)
 	economy_box.add_child(ui.lastItem)
 	_build_resident_program_hud(economy_box)
 	economy_box.add_child(_title("아이템 목록"))
-	ui.itemInventory = _rich("보유 아이템 없음", 90)
+	ui.itemInventory = _rich("보유 아이템 없음", 34)
 	economy_box.add_child(ui.itemInventory)
 	economy_box.add_child(_title("최근 성장"))
-	ui.recentPerk = _rich("아직 없음", 50)
+	ui.recentPerk = _rich("아직 없음", 34)
 	economy_box.add_child(ui.recentPerk)
 
 	ui.statusPanel = _panel("statusPanel", Vector2(12, -148), Vector2(270, 136), 0.92, 4)
@@ -415,6 +423,7 @@ func _build_choice_overlay(root: Control) -> void:
 	ui.choiceDescription.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ui.choiceDescription.clip_contents = true
 	ui.choiceDescription.fit_content = false
+	ui.choiceDescription.scroll_active = false
 	ui.choiceDescription.add_theme_stylebox_override("normal", _style_box(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 0, 0, 0))
 	ui.choiceDescription.add_theme_color_override("default_color", Color("#9aa8ba"))
 	ui.choiceDescription.add_theme_font_size_override("normal_font_size", 11)
@@ -518,12 +527,13 @@ func _apply_html_layout(viewport_size: Vector2) -> void:
 	if ui.is_empty():
 		return
 	HtmlLayoutMetrics.apply_desktop_hud_layout(ui, viewport_size, status_minimized, _debug_minimized())
-	_apply_fixed_panel_constraints(viewport_size)
 	_apply_responsive_text(viewport_size)
+	_apply_fixed_panel_constraints(viewport_size)
 	if ui.has("choiceOverlay"):
 		HtmlLayoutMetrics.apply_choice_overlay_layout(ui.choiceOverlay, ui.choicePanel, ui.choiceScroll, ui.choiceGrid, viewport_size, choice_layout_scale, choice_requested_columns)
 		_apply_choice_box_padding(viewport_size)
 		_apply_choice_card_widths(viewport_size)
+		_apply_choice_panel_content_height(viewport_size)
 	if ui.has("gameOverPanel"):
 		var size = HtmlLayoutMetrics.game_over_panel_size(viewport_size)
 		ui.gameOverPanel.anchor_left = 0.5
@@ -566,11 +576,15 @@ func _apply_fixed_panel_constraints(viewport_size: Vector2) -> void:
 			continue
 		var rule = HtmlLayoutMetrics.fixed_panel_rule(key, viewport_size, status_minimized, _debug_minimized())
 		var rect = rule.get("rect", Rect2(Vector2.ZERO, Vector2.ZERO))
+		var panel_rect = rect
 		panel.clip_contents = true
-		panel.custom_minimum_size = Vector2.ZERO
-		panel.size = rect.size
 		panel.mouse_filter = int(rule.get("mouse_filter", panel.mouse_filter))
 		_set_panel_box(panel, int(rule.get("padding", 0)), int(rule.get("radius", 8)))
+		if _panel_prefers_content_height(key):
+			panel_rect.size.y = _content_fit_panel_height(panel, rect.size.y)
+			if _panel_anchors_to_bottom(key):
+				panel_rect.position.y = rect.position.y + rect.size.y - panel_rect.size.y
+		_apply_panel_rect(panel, panel_rect)
 		var content_inset = max(1, int(rule.get("padding", 0)))
 		var clip = panel.get_node_or_null("%sClip" % panel.name)
 		if clip is Control:
@@ -597,6 +611,43 @@ func _apply_fixed_panel_constraints(viewport_size: Vector2) -> void:
 	if ui.has("debugScroll") and ui.debugScroll is Control:
 		ui.debugScroll.custom_minimum_size = Vector2(0, HtmlLayoutMetrics.debug_buttons_max_height(viewport_size))
 
+func _panel_prefers_content_height(key: String) -> bool:
+	if key == "debugPanel":
+		return false
+	if key == "statusPanel" and status_minimized:
+		return false
+	return ["combatHud", "economyHud", "statusPanel"].has(key)
+
+func _panel_anchors_to_bottom(key: String) -> bool:
+	return ["statusPanel", "debugPanel"].has(key)
+
+func _content_fit_panel_height(panel: Control, max_height: float) -> float:
+	var preferred = _panel_child_preferred_height(panel)
+	var style = panel.get_theme_stylebox("panel")
+	if style != null:
+		preferred += style.get_minimum_size().y
+	return ceil(clamp(preferred, 1.0, max_height))
+
+func _panel_child_preferred_height(node: Node) -> float:
+	var preferred = 0.0
+	for child in node.get_children():
+		if child is Control and child.visible:
+			preferred = max(preferred, (child as Control).get_combined_minimum_size().y)
+			preferred = max(preferred, _panel_child_preferred_height(child))
+	return preferred
+
+func _apply_panel_rect(control: Control, rect: Rect2) -> void:
+	control.anchor_left = 0.0
+	control.anchor_top = 0.0
+	control.anchor_right = 0.0
+	control.anchor_bottom = 0.0
+	control.offset_left = round(rect.position.x)
+	control.offset_top = round(rect.position.y)
+	control.offset_right = round(rect.position.x + rect.size.x)
+	control.offset_bottom = round(rect.position.y + rect.size.y)
+	control.custom_minimum_size = Vector2.ZERO
+	control.size = rect.size
+
 func _apply_choice_box_padding(viewport_size: Vector2) -> void:
 	if not ui.has("choiceBox") or not ui.choiceBox is Control:
 		return
@@ -615,6 +666,69 @@ func _apply_choice_box_padding(viewport_size: Vector2) -> void:
 		_apply_scroll_inset(ui.choiceScrollInset, viewport_size)
 	if ui.has("debugBodyInset") and ui.debugBodyInset is MarginContainer:
 		_apply_scroll_inset(ui.debugBodyInset, viewport_size)
+
+func _apply_choice_panel_content_height(viewport_size: Vector2) -> void:
+	if not ui.has("choicePanel") or not ui.choicePanel is Control:
+		return
+	var max_size = HtmlLayoutMetrics.choice_panel_size(viewport_size, choice_layout_scale)
+	var padding_top = HtmlLayoutMetrics.choice_panel_top_padding(viewport_size)
+	var padding_bottom = HtmlLayoutMetrics.choice_panel_padding(viewport_size)
+	var separation = float(ui.choiceBox.get_theme_constant("separation")) if ui.has("choiceBox") and ui.choiceBox is BoxContainer else 0.0
+	var title_height = _control_min_height(ui.get("choiceTitle", null))
+	var description_height = _control_min_height(ui.get("choiceDescription", null))
+	var grid_height = _choice_grid_preferred_height(viewport_size)
+	var visible_sections = 0
+	for node in [ui.get("choiceTitle", null), ui.get("choiceDescription", null), ui.get("choiceScroll", null)]:
+		if node is Control and node.visible:
+			visible_sections += 1
+	var section_gaps = separation * float(max(0, visible_sections - 1))
+	var desired_height = padding_top + padding_bottom + title_height + description_height + grid_height + section_gaps
+	var min_height = 132.0 if HtmlLayoutMetrics.is_compact_viewport(viewport_size) else 180.0
+	var panel_height = min(max_size.y, max(min_height, ceil(desired_height)))
+	var scroll_height = max(48.0, panel_height - padding_top - padding_bottom - title_height - description_height - section_gaps)
+	ui.choiceScroll.custom_minimum_size = Vector2(0, min(grid_height, scroll_height))
+	ui.choiceScroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	ui.choiceScroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO if grid_height > scroll_height + 1.0 else ScrollContainer.SCROLL_MODE_DISABLED
+	_apply_centered_panel_size(ui.choicePanel, Vector2(max_size.x, panel_height))
+
+func _choice_grid_preferred_height(viewport_size: Vector2) -> float:
+	if not ui.has("choiceGrid") or not ui.choiceGrid is GridContainer:
+		return 0.0
+	var columns = max(1, int(ui.choiceGrid.columns))
+	var gap = HtmlLayoutMetrics.choice_gap(viewport_size)
+	var row_heights: Array = []
+	var visible_index = 0
+	for child in ui.choiceGrid.get_children():
+		if not child is Control or not child.visible:
+			continue
+		var row = int(floor(float(visible_index) / float(columns)))
+		while row_heights.size() <= row:
+			row_heights.append(0.0)
+		row_heights[row] = max(float(row_heights[row]), _control_min_height(child))
+		visible_index += 1
+	var height = 0.0
+	for value in row_heights:
+		height += float(value)
+	if row_heights.size() > 1:
+		height += gap * float(row_heights.size() - 1)
+	return height
+
+func _control_min_height(node) -> float:
+	if node is Control and node.visible:
+		return max((node as Control).custom_minimum_size.y, (node as Control).get_combined_minimum_size().y)
+	return 0.0
+
+func _apply_centered_panel_size(panel: Control, size: Vector2) -> void:
+	panel.anchor_left = 0.5
+	panel.anchor_top = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_bottom = 0.5
+	panel.offset_left = round(-size.x * 0.5)
+	panel.offset_top = round(-size.y * 0.5)
+	panel.offset_right = round(size.x * 0.5)
+	panel.offset_bottom = round(size.y * 0.5)
+	panel.custom_minimum_size = Vector2.ZERO
+	panel.size = size
 
 func _apply_choice_title_safe_layout(viewport_size: Vector2) -> void:
 	if not ui.has("choiceTitle") or not ui.choiceTitle is Label:
@@ -729,6 +843,14 @@ func _vbox(parent: Node, separation: int) -> VBoxContainer:
 		inset.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		scroll.add_child(inset)
 		inset.add_child(box)
+	elif _should_clip_panel_content(parent):
+		var clip = _panel_clip(parent)
+		box.set_anchors_preset(Control.PRESET_FULL_RECT)
+		box.offset_left = 0.0
+		box.offset_top = 0.0
+		box.offset_right = 0.0
+		box.offset_bottom = 0.0
+		clip.add_child(box)
 	else:
 		parent.add_child(box)
 	return box
@@ -746,6 +868,9 @@ func _panel_clip(parent: Node) -> Control:
 
 func _should_wrap_panel_content(parent: Node) -> bool:
 	return parent is PanelContainer and HtmlLayoutMetrics.fixed_panel_uses_scroll_wrapper(str(parent.name))
+
+func _should_clip_panel_content(parent: Node) -> bool:
+	return parent is PanelContainer and ["combatHud", "economyHud", "statusPanel"].has(str(parent.name))
 
 func _title(text: String) -> Label:
 	return _label(text, 15, Color("#edf2f7"), true)
@@ -785,7 +910,7 @@ func _rich(text: String, height: float) -> RichTextLabel:
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size = Vector2(0, height)
 	label.fit_content = false
-	label.scroll_active = true
+	label.scroll_active = false
 	label.add_theme_font_size_override("normal_font_size", 11)
 	label.add_theme_color_override("default_color", Color("#c8d5e7"))
 	var style = _style_box(Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.0), 6, 0, 2)
@@ -1080,6 +1205,7 @@ func update_from_state(state: Dictionary) -> void:
 		ui.gameOverSummary.text = "생존 시간 %s, 도달 레벨 %d, 보유 골드 %dG.\nR을 눌러 재시작하세요." % [game.format_time(state.elapsed), state.level, state.gold]
 	ui.cleanupHud.visible = state.cleanupComboValue > 0
 	var viewport_size = get_viewport().get_visible_rect().size
+	_apply_economy_text_heights(viewport_size)
 	_update_mobile_button_state(state)
 	_apply_html_layout(viewport_size)
 	_apply_mobile_layout(viewport_size)
@@ -1139,6 +1265,39 @@ func show_inventory_overview(callback: Callable) -> void:
 	_apply_html_layout(HtmlLayoutMetrics.viewport_size(get_viewport()))
 	ui.choiceOverlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	ui.choiceOverlay.visible = true
+
+func _apply_economy_text_heights(viewport_size: Vector2) -> void:
+	var content_width = max(80.0, HtmlLayoutMetrics.economy_hud_rect(viewport_size).size.x - 18.0)
+	_apply_compact_rich_height(ui.get("lastItem", null), content_width, 30.0, 72.0, false)
+	_apply_compact_rich_height(ui.get("itemInventory", null), content_width, 30.0, 112.0 if not HtmlLayoutMetrics.is_compact_viewport(viewport_size) else 40.0, true)
+	_apply_compact_rich_height(ui.get("recentPerk", null), content_width, 30.0, 72.0, false)
+
+func _apply_compact_rich_height(node, width: float, min_height: float, max_height: float, allow_scroll: bool) -> void:
+	if not node is RichTextLabel:
+		return
+	var label = node as RichTextLabel
+	var font_size = int(label.get_theme_font_size("normal_font_size"))
+	var style = label.get_theme_stylebox("normal")
+	var style_size = style.get_minimum_size() if style != null else Vector2.ZERO
+	var measured_width = max(48.0, width - style_size.x)
+	var text_height = _estimated_text_height(_plain_measure_text(label.text), font_size, measured_width) + style_size.y
+	label.custom_minimum_size = Vector2(0, ceil(clamp(text_height, min_height, max_height)))
+	label.scroll_active = allow_scroll and text_height > max_height + 1.0
+
+func _plain_measure_text(text: String) -> String:
+	var result = ""
+	var inside_tag = false
+	for index in range(text.length()):
+		var ch = text.substr(index, 1)
+		if ch == "[" or ch == "<":
+			inside_tag = true
+			continue
+		if inside_tag and (ch == "]" or ch == ">"):
+			inside_tag = false
+			continue
+		if not inside_tag:
+			result += ch
+	return result
 
 func hide_choices() -> void:
 	ui.choiceOverlay.visible = false
@@ -1497,7 +1656,7 @@ func _choice_card_required_height(card: Control, card_width: float, viewport_siz
 				total += separation
 			total += _choice_child_required_height(child, content_width, viewport_size)
 			visible_count += 1
-	var render_safety = 34.0 if HtmlLayoutMetrics.is_compact_viewport(viewport_size) else 48.0
+	var render_safety = 3.0
 	return ceil(total + render_safety)
 
 func _choice_child_required_height(child: Control, content_width: float, viewport_size: Vector2) -> float:
@@ -1507,7 +1666,9 @@ func _choice_child_required_height(child: Control, content_width: float, viewpor
 		var label = _find_node_named(child, "choiceMetaText")
 		var meta_font = _choice_meta_font_size(viewport_size)
 		var label_height = _estimated_text_height(label.text if label is Label else "", meta_font, content_width)
-		return 12.0 + label_height
+		var style = child.get_theme_stylebox("panel")
+		var style_height = style.get_minimum_size().y if style != null else 2.0
+		return style_height + label_height
 	if child is Label:
 		var label = child as Label
 		var font_size = int(label.get_theme_font_size("font_size"))

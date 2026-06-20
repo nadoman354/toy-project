@@ -86,7 +86,7 @@ func _create_popup_window(popup: Dictionary) -> void:
 	title_bar.mouse_filter = Control.MOUSE_FILTER_STOP
 	title_bar.clip_contents = true
 	title_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title_bar.add_theme_constant_override("separation", 4)
+	title_bar.add_theme_constant_override("separation", 8)
 	var title = panel.get_node("PopupBox/TitleFrame/TitleBar/TitleLabel") as Label
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -99,7 +99,7 @@ func _create_popup_window(popup: Dictionary) -> void:
 	if popup.def.type == "stock_broker_app":
 		if min_button != null:
 			min_button.text = "_"
-			min_button.custom_minimum_size = Vector2(22, 20)
+			min_button.custom_minimum_size = Vector2(24, 22)
 			_style_title_button(min_button)
 			min_button.pressed.connect(func(id = popup.id): game.toggle_popup_minimized(id))
 	else:
@@ -108,7 +108,7 @@ func _create_popup_window(popup: Dictionary) -> void:
 	if not ["first_purchase_package", "stock_broker_app"].has(popup.def.type):
 		if close != null:
 			close.text = "X"
-			close.custom_minimum_size = Vector2(22, 20)
+			close.custom_minimum_size = Vector2(24, 22)
 			_style_title_button(close)
 			close.pressed.connect(func(id = popup.id): game.request_close_popup(id, {"reason": "button"}))
 	else:
@@ -136,7 +136,7 @@ func _create_popup_window(popup: Dictionary) -> void:
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.custom_minimum_size = Vector2(0, 60)
 	body.fit_content = false
-	body.scroll_active = true
+	body.scroll_active = false
 	body.add_theme_font_size_override("normal_font_size", 13)
 	body.add_theme_color_override("default_color", _popup_text_color(popup.def.type))
 	var detail = panel.get_node("PopupBox/ContentFrame/ContentBox/DetailText") as RichTextLabel
@@ -328,6 +328,24 @@ func _apply_popup_text_contract(label: RichTextLabel, popup: Dictionary, layout:
 	var font_size = int(layout.body_font) if role == "body" else int(layout.detail_font)
 	label.add_theme_font_size_override("normal_font_size", font_size)
 	label.add_theme_color_override("default_color", _popup_text_color(popup.def.type))
+	if role == "detail":
+		_apply_popup_detail_style(label, popup)
+	else:
+		label.add_theme_stylebox_override("normal", _style_box(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 0, 0, 0))
+
+func _apply_popup_detail_style(label: RichTextLabel, popup: Dictionary) -> void:
+	match str(popup.def.get("type", "")):
+		"terms":
+			label.add_theme_color_override("default_color", Color("#4b1d2c"))
+			label.add_theme_stylebox_override("normal", _style_box(Color(1, 1, 1, 0.65), Color(0, 0, 0, 0), 6, 0, 8))
+		"first_purchase_package":
+			label.add_theme_color_override("default_color", Color("#4a3a1a"))
+			label.add_theme_stylebox_override("normal", _style_box(Color(1, 1, 1, 0.68), Color(0, 0, 0, 0.16), 6, 1, 8))
+		"security_installer", "security_update_notice":
+			label.add_theme_color_override("default_color", Color("#102b3a"))
+			label.add_theme_stylebox_override("normal", _style_box(Color(1, 1, 1, 0.62), Color(0, 0, 0, 0.12), 6, 1, 7))
+		_:
+			label.add_theme_stylebox_override("normal", _style_box(Color(1, 1, 1, 0.48), Color(0, 0, 0, 0.10), 6, 1, 6))
 
 func _apply_popup_button_layout(node: Node, font_size: int, min_height: float, min_width: float, max_width: float, control_label_width: float) -> void:
 	for child in node.get_children():
@@ -363,15 +381,14 @@ func _popup_body(popup: Dictionary) -> String:
 		lines.append("보안 격리 중 %.1fs" % popup.securityQuarantineTimer)
 	match def.type:
 		"first_purchase_package":
-			lines.append("10G를 지불하면 스타터 계약 선택 화면으로 넘어갑니다.")
-			lines.append("현재 상태: %s" % game.first_purchase_status_text())
+			pass
 		"sponsored_ad":
 			lines.append("광고 유지 %.0f%% / 완료 시 보상 지급" % (popup.get("progress", 0.0) * 100.0))
 			lines.append("열려 있는 동안 전투 버프가 적용됩니다.")
 		"timed_reward":
 			lines.append("보상까지 %.1f초" % max(0.0, game.timed_reward_duration(def) - float(popup.elapsed)))
 		"terms":
-			lines.append("체크 상태로 수락하면 높은 보상과 위험 패널티가 함께 적용됩니다.")
+			pass
 		"interest_offer":
 			lines.append(game.interest_popup_text(popup))
 		"recurring_investment":
@@ -407,6 +424,8 @@ func _popup_detail(popup: Dictionary) -> String:
 			return _popup_store_detail_text(popup)
 		"boss_package_ad":
 			return _boss_package_detail_text(popup)
+		"first_purchase_package":
+			return _first_purchase_detail_text(popup)
 		"security_installer":
 			return _security_installer_detail_text(popup)
 		"sponsored_ad":
@@ -520,6 +539,11 @@ func _terms_detail_text(popup: Dictionary) -> String:
 	var checked = popup.get("termsRiskChecked", true)
 	var status = "체크됨" if checked else "체크 해제"
 	return "%s\n상태: [b]%s[/b]\n체크 상태로 수락: 높은 보상 + 위험 패널티 + 난이도 증가\n체크 해제 후 수락: 낮은 보상, 패널티 없음" % [popup.def.get("dangerClauseText", "위험 조항에 동의합니다."), status]
+
+func _first_purchase_detail_text(popup: Dictionary) -> String:
+	var efficiency = str(popup.def.get("efficiencyLabel", "")).strip_edges()
+	var prefix = "[b]%s[/b]\n" % efficiency if efficiency != "" else ""
+	return "%s10G를 지불하면 계약 선택 화면으로 넘어갑니다.\n실제 결제가 아니라 인게임 골드만 사용합니다.\n현재 상태: %s" % [prefix, game.first_purchase_status_text()]
 
 func _effect_summary(effect: Dictionary) -> String:
 	var type = effect.get("type", "")

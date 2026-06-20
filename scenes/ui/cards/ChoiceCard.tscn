@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [node name="ChoiceCard" type="Button"]
-custom_minimum_size = Vector2(204, 112)
+custom_minimum_size = Vector2(204, 96)
 text = ""
 autowrap_mode = 0
 clip_contents = true
@@ -37,7 +37,7 @@ mouse_filter = 2
 text = "선택 카드 제목"
 
 [node name="choiceDescriptionText" type="Label" parent="choiceCardBody"]
-custom_minimum_size = Vector2(0, 44)
+custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 mouse_filter = 2
 text = "선택 설명 텍스트가 들어가는 영역"
